@@ -1,12 +1,12 @@
 # VRM Viewer with VRMA Animation
 
+[English](README.md) | [日本語](README-jp.md)
+
 Three.jsとthree-vrmライブラリを使用して構築された、VRMA（VRMアニメーション）サポート付きのWebベースVRM（Virtual Reality Model）ビューアーです。
 
 ## 🎮 ライブデモ
 
-**[デモを試す →](https://YOUR-USERNAME.github.io/YOUR-REPOSITORY-NAME/)**
-
-> **注意**: GitHubにアップロード後、`YOUR-USERNAME`と`YOUR-REPOSITORY-NAME`を実際のGitHubユーザー名とリポジトリ名に置き換えてください。
+**[デモを試す →](https://tk256ailab.github.io/vrm-viewer/)**
 
 ## 特徴
 
@@ -21,7 +21,7 @@ Three.jsとthree-vrmライブラリを使用して構築された、VRMA（VRM�
 
 `index.html`をWebブラウザで開くとデモを確認できます。ビューアーには以下が含まれています：
 
-- サンプルVRMモデル（ロング女の子1.vrm）
+- サンプルVRMモデル（sample.vrm）
 - 11種類のVRMAアニメーション例：
   - **Angry**: 怒り感情のアニメーション
   - **Blush**: 照れる感情のアニメーション
@@ -169,7 +169,3 @@ vrm_viewer/
 - [three-vrm](https://github.com/pixiv/three-vrm) - Three.js用VRMサポート
 - [Three.js](https://threejs.org/) - 3Dグラフィックス基盤
 - VRMコンソーシアム - VRMフォーマット仕様
-
----
-
-英語版ドキュメントは [README.md](README.md) をご覧ください。
