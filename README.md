@@ -4,7 +4,7 @@ A web-based VRM (Virtual Reality Model) viewer with VRMA (VRM Animation) support
 
 ## 🎮 Live Demo
 
-**[Try the Demo →](https://TK-256.github.io/vrm-viewer/)**
+**[Try the Demo →](https://tk256ailab.github.io/vrm-viewer/)**
 
 > **Note**: Replace `YOUR-USERNAME` and `YOUR-REPOSITORY-NAME` with your actual GitHub username and repository name after uploading to GitHub.
 
