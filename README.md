@@ -1,5 +1,7 @@
 # VRM Viewer with VRMA Animation
 
+[English](README.md) | [日本語](README-jp.md)
+
 A web-based VRM (Virtual Reality Model) viewer with VRMA (VRM Animation) support built using Three.js and the three-vrm library.
 
 ## 🎮 Live Demo
@@ -168,7 +170,3 @@ This project is for demonstration purposes. Please ensure you have appropriate r
 - [three-vrm](https://github.com/pixiv/three-vrm) - VRM support for Three.js
 - [Three.js](https://threejs.org/) - 3D graphics foundation
 - VRM Consortium - VRM format specification
-
----
-
-For Japanese documentation, see [README-jp.md](README-jp.md).
