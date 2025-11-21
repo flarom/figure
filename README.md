@@ -106,6 +106,12 @@ The viewer automatically loads the VRM model specified in `index.html`. To use y
 2. Click any of the VRMA animation buttons to select an animation (Angry, Blush, Clapping, Goodbye, Jump, LookAround, Relax, Sad, Sleepy, Surprised, or Thinking)
 3. Use the playback controls to manage animation
 
+### Camera Controls
+
+- **Rotate**: Left-click and drag to rotate the camera around the model
+- **Pan**: Right-click and drag to move the camera horizontally/vertically
+- **Zoom**: Scroll with mouse wheel to zoom in/out
+
 ### Controls
 
 - **VRMA Animation Buttons**: Select and load different animations
