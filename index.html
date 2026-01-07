@@ -3,11 +3,13 @@
 
 <head>
 	<meta charset="utf-8" />
-	<title>VRM Model Viewer</title>
+	<title>Figure - VRM Model Viewer</title>
 	<meta name="viewport"
 		content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 	<link rel="stylesheet" href="style/palette.css">
 	<link rel="stylesheet" href="style/share.css">
+	<link rel="stylesheet" href="style/prompts.css">
+	<link rel="shortcut icon" href="static/favicon.svg" type="image/x-icon">
 </head>
 
 <body class="theme-light">
@@ -18,25 +20,37 @@
 			<button id="openFileBtn" class="icon-button" translate="no" title="Open model">folder_open</button>
 		</div>
 		<div class="header-center hide-on-mobile">
-			<div id="vrm-model-name">VRM Model Viewer</div>
+			<div id="vrm-model-name">Figure</div>
 			<span id="vrm-author-name">Currently loading</span>
 		</div>
 		<div class="header-right">
-			<button class="icon-button" translate="no" id="playPauseBtn" title="Play / Pause animation" disabled>play_arrow</button>
+			<button class="icon-button" translate="no" id="playPauseBtn" title="Play / Pause animation (P)" disabled>play_arrow</button>
 			<hr>
-			<button class="icon-button" translate="no" id="stopBtn" title="Reset animation" disabled>accessibility</button>
-			<button class="icon-button" translate="no" id="resetCameraBtn" title="Reset camera">refresh</button>
+			<button class="icon-button" translate="no" id="stopBtn" title="Stop animation" disabled>accessibility</button>
+			<button class="icon-button" translate="no" id="resetCameraBtn" title="Reset camera (R)">refresh</button>
 			<hr>
-			<button class="icon-button" translate="no">more_vert</button>
+			<div class="dropdown">
+				<button class="icon-button" translate="no" onmousedown="toggleDropdown('more-menu')">more_vert</button>
+				<div class="dropdown-content menu" id="more-menu">
+					<button class="text-button" onmouseup="showMessageFromFile('dialog/about.html'); hideAllMenus()">
+						<span>About Figure</span>
+						<kbd>F1</kbd>
+					</button>
+				</div>
+			</div>
 		</div>
 	</header>
 
-	<div id="controls-bar" class="sidebar show">
+	<div id="controls-bar" class="sidebar">
 		<div class="item-group">
-			<div class="item-group-header">
-				<div style="display: flex; align-items: center; gap: 6px;">
-					<span class="icon item-group-icon">info</span>
-					<strong>Model information</strong>
+			<div id="modelInfo">
+				<div class="item-group-header">
+					<div style="display: flex; align-items: center; gap: 6px;">
+						<span class="icon item-group-icon">info</span>
+						<strong>Model information</strong>
+					</div>
+				</div>
+				<div class="item-group-content collapsed">
 				</div>
 			</div>
 		</div>
@@ -91,10 +105,12 @@
 
 	</div>
 
-	<!-- hidden file input for Open model button (accept only .vrm and .vrma) -->
+	<!-- hidden file input for Open model button -->
 	<input type="file" id="fileInput" accept=".vrm,.vrma" style="display:none" />
 
+	<script src="script/settings.js"></script>
 	<script src="script/prompts.js"></script>
+	<script src="script/i18n.js"></script>
 
 	<script type="importmap">
 			{
@@ -114,8 +130,8 @@
 		import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 		import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
 
+		// #region DOM Elements
 		// DOM elements
-		// Container where VRMA buttons will be populated
 		const vrmaButtonsContainer = document.querySelector('#vrmaButtons .item-group-content');
 		const playPauseBtn = document.getElementById('playPauseBtn');
 		const stopBtn = document.getElementById('stopBtn');
@@ -127,6 +143,7 @@
 		const fileInput = document.getElementById('fileInput');
 
 		attachItemGroupToggles();
+		// #endregion DOM Elements
 
 		// Wire Open model button to hidden file input
 		if (openFileBtn && fileInput) {
@@ -141,6 +158,7 @@
 			});
 		}
 
+		// #region Three.js Setup
 		// --- Three.js Setup ---
 		const renderer = new THREE.WebGLRenderer({ antialias: true });
 		renderer.setSize(window.innerWidth, window.innerHeight);
@@ -181,8 +199,9 @@
 		let groundShadow = null;
 
 		const LAST_VRM_KEY = 'vrmViewer.lastVrm';
+		// #endregion Three.js Setup
 
-		// --- IndexedDB helpers for storing VRM blobs ---
+		// #region IndexedDB Helpers
 		function openIdb() {
 			return new Promise((resolve, reject) => {
 				const req = indexedDB.open('vrmViewerDB', 1);
@@ -226,9 +245,11 @@
 			}));
 
 		}
+		// #endregion IndexedDB Helpers
 
+		// #region Last VRM Persistence
 		/**
-		 * Save last VRM reference. For local files, store the blob in IndexedDB and save metadata in localStorage.
+	 	* Save last VRM reference. For local files, store the blob in IndexedDB and save metadata in localStorage.
 	 	 */
 		function saveLastVrm(file, url, name) {
 			try {
@@ -306,11 +327,13 @@
 			// Try to remove blob from IndexedDB as well
 			deleteVrmFromIdb().catch(() => { /* ignore */ });
 			vrmModelName.textContent = '';
-			document.title = 'VRM Model Viewer';
+			document.title = 'Figure - VRM Model Viewer';
 			vrmAuthorName.textContent = '';
 			statusDiv.textContent = 'Recent VRM removed.';
 		}
+		// #endregion Last VRM Persistence
 
+		// #region Dispose & Cleanup
 		/**
 		 * Safely dispose a loaded VRM: geometries, materials, textures and stop mixers.
 		 * @param {any} vrm VRM instance returned by the loader
@@ -363,7 +386,9 @@
 				console.warn('Error while disposing VRM:', e);
 			}
 		}
+		// #endregion Dispose & Cleanup
 
+		// #region Loader Plugins
 		// --- GLTF Loader with VRM and VRMA Plugins ---
 		const loader = new GLTFLoader();
 		loader.crossOrigin = 'anonymous';
@@ -375,7 +400,9 @@
 		loader.register((parser) => {
 			return new VRMAnimationLoaderPlugin(parser);
 		});
+		// #endregion Loader Plugins
 
+		// #region File Paths
 		// --- File Paths ---
 		const VRM_MODEL_URL = './VRM/default.vrm'; // Fixed VRM model path (relative path)
 		// VRMA animations dictionary: map an id/key (used by buttons) to URL
@@ -409,7 +436,9 @@
 			'Gentleman'      : './VRMA/VRoid Hub/Gentleman.vrma',
 			'Powerful'       : './VRMA/VRoid Hub/Powerful.vrma'
 		};
+		// #endregion File Paths
 
+		// #region File Loading
 		// --- File Loading Functions ---
 		/**
 		 * Loads a VRM model from a specified URL.
@@ -459,7 +488,7 @@
 							// Update header with model name when provided
 							if (displayName) {
 								vrmModelName.textContent = currentVrm.meta.title || currentVrm.meta.name || displayName;
-								document.title = vrmModelName.textContent + ' - VRM Model Viewer';
+								document.title = vrmModelName.textContent + ' - Figure';
 								vrmAuthorName.textContent = currentVrm.meta.author || 'Unknown author';
 							}
 
@@ -486,6 +515,9 @@
 
 							// Populate materials list
 							try { populateMaterials(); } catch (e) { console.warn('populateMaterials failed:', e); }
+
+							// Populate model info
+							try { populateModelInfo(); } catch (e) { console.warn('populateModelInfo failed:', e); }
 
 							// Save last VRM reference to localStorage (attempt to persist)
 							try { saveLastVrm(fileObject, url, displayName || (url && url.split('/').pop())); } catch (e) { console.warn(e); }
@@ -576,7 +608,9 @@
 				statusDiv.textContent = 'An error occurred while loading the animation file';
 			}
 		}
+		// #endregion File Loading
 
+		// #region Animation Controls
 		// --- Animation Control Functions ---
 		/**
 		 * Starts playing the loaded VRMA animation.
@@ -641,7 +675,9 @@
 				statusDiv.textContent = 'Animation stopped.';
 			}
 		}
+		// #endregion Animation Controls
 
+		// #region UI & Events
 		// --- UI and Event Handlers ---
 		/**
 		 * Updates the state of the control buttons based on loaded files.
@@ -710,6 +746,7 @@
 						return;
 					}
 					await loadVRMA(url2, url2.split('/').pop());
+					if (isMobile()) document.getElementById('controls-bar').classList.remove('show');
 				});
 
 				container.appendChild(btn);
@@ -828,6 +865,25 @@
 			await handleFileDrop(file);
 		});
 
+		document.body.addEventListener('keydown', async (e) => {
+			if (e.key == 'r') {
+				smoothResetCamera(600);
+			}
+			if (e.key == 'p') {
+				togglePlayPause();
+				if (currentAction && currentAction.paused) {
+					showToast('Animation paused', 'pause');
+				} else {
+					showToast('Animation playing', 'play_arrow');
+				}
+			}
+			if (e.key == 'F1') {
+				showMessageFromFile('dialog/about.html');
+				closeAllDialogs();
+				hideAllMenus();
+			}
+		});
+
 		// --- Helpers ---
 		// const gridHelper = new THREE.GridHelper(10, 10);
 		// scene.add(gridHelper);
@@ -899,33 +955,75 @@
 			});
 		}
 
-		// --- Blend Shape Controls ---
-		const BLENDSHAPE_PRESETS = [
-			{ id: 'blendShapeNeutral', label: 'Neutral', key: 'neutral' },
-			{ id: 'blendShapeA', label: 'A', key: 'a' },
-			{ id: 'blendShapeI', label: 'I', key: 'i' },
-			{ id: 'blendShapeU', label: 'U', key: 'u' },
-			{ id: 'blendShapeE', label: 'E', key: 'e' },
-			{ id: 'blendShapeO', label: 'O', key: 'o' },
-			{ id: 'blendShapeBlink', label: 'Blink', key: 'blink' },
-			{ id: 'blendShapeBlinkR', label: 'Blink right', key: 'blink_r' },
-			{ id: 'blendShapeBlinkL', label: 'Blink left', key: 'blink_l' },
-			{ id: 'blendShapeAngry', label: 'Angry', key: 'angry' },
-			{ id: 'blendShapeFun', label: 'Fun', key: 'fun' },
-			{ id: 'blendShapeJoy', label: 'Joy', key: 'joy' },
-			{ id: 'blendShapeSorrow', label: 'Sorrow', key: 'sorrow' },
-			{ id: 'blendShapeSurprised', label: 'Surprised', key: 'surprised' },
+		// #endregion UI & Events
+
+		// #region Blend Shape Controls
+		const BLENDSHAPE_ORDER = [
+			// neutral
+			'neutral',
+
+			// vocals (phonetical japanese)
+			'a', 'i', 'u', 'e', 'o',
+
+			// eyes
+			'blink', 'blink_r', 'blink_l',
+
+			// universal vrm expressions
+			'angry', 'fun', 'joy', 'sorrow',
 		];
 
 		/**
+		 * Normalize blendshape names to a canonical form
+		 * to guarantee stable matching across VRM / VRoid variations.
+		 */
+		function normalizeBlendShapeName(name) {
+			return name
+				.toLowerCase()
+				.trim()
+				.replace(/\s+/g, '')
+				.replace(/-/g, '_')
+				.replace(/_?left$/, '_l')
+				.replace(/_?right$/, '_r');
+		}
+
+		/**
 		 * Apply a blend shape value (0-100) to the current VRM.
-		 * Tries `blendShapeProxy.setValue`
 		 */
 		function applyBlendShape(key, value100) {
 			if (!currentVrm) return;
 			const v = Math.max(0, Math.min(100, Number(value100))) / 100.0;
-
 			currentVrm.expressionManager.setValue(key, v);
+		}
+
+		/**
+		 * Sort blendshape names:
+		 * 1. Fixed VRM order
+		 * 2. Custom expressions (alphabetical)
+		 */
+		function sortBlendShapeNames(names) {
+			const nameMap = new Map();
+
+			// index detected names using normalized keys
+			names.forEach(name => {
+				nameMap.set(normalizeBlendShapeName(name), name);
+			});
+
+			const result = [];
+
+			// push fixed expressions strictly in canonical order
+			BLENDSHAPE_ORDER.forEach(key => {
+				if (nameMap.has(key)) {
+					result.push(nameMap.get(key));
+					nameMap.delete(key);
+				}
+			});
+
+			// remaining expressions are custom → alphabetical
+			const custom = Array.from(nameMap.values()).sort((a, b) =>
+				a.localeCompare(b)
+			);
+
+			return result.concat(custom);
 		}
 
 		/**
@@ -936,78 +1034,78 @@
 			if (!container) return;
 			container.innerHTML = '';
 
-			if (!currentVrm) {
-				// no model yet
-				BLENDSHAPE_PRESETS.forEach(p => {
-					const label = document.createElement('span'); label.textContent = p.label; label.style.marginRight = '6px';
-					const input = document.createElement('input');
-					input.className = 'item'; input.type = 'range'; input.name = p.id; input.id = p.id;
-					input.min = 0; input.max = 100; input.value = 0; input.step = 1;
-					input.addEventListener('input', (e) => { /* noop until VRM loaded */ });
-					container.appendChild(label); container.appendChild(input);
-				});
-				return;
-			}
+			if (!currentVrm) return;
 
 			// collect morph target names from meshes
 			const names = new Set();
-			currentVrm.scene.traverse((obj) => {
+			currentVrm.scene.traverse(obj => {
 				if (!obj.isMesh || !obj.morphTargetDictionary) return;
 				Object.keys(obj.morphTargetDictionary).forEach(n => names.add(n));
 			});
 
-			// If blendShapeProxy exists, also try to include its known names (best effort)
+			// collect blendshape proxy names (best effort)
 			try {
 				if (currentVrm.blendShapeProxy) {
 					if (Array.isArray(currentVrm.blendShapeProxy.expressions)) {
-						currentVrm.blendShapeProxy.expressions.forEach(e => { if (e && e.name) names.add(e.name); });
+						currentVrm.blendShapeProxy.expressions.forEach(e => {
+							if (e?.name) names.add(e.name);
+						});
 					}
-					// Some versions store internal binds; try common property
 					if (currentVrm.blendShapeProxy._binds) {
 						Object.keys(currentVrm.blendShapeProxy._binds).forEach(k => names.add(k));
 					}
 				}
-			} catch (e) { /* ignore */ }
+			} catch (_) {}
 
-			// Build controls for each detected name
-			Array.from(names).sort().forEach(name => {
-				const span = document.createElement('span');
-				span.textContent = name;
-				span.style.marginRight = '6px';
+			// build UI controls in correct order
+			sortBlendShapeNames(Array.from(names)).forEach(name => {
+				const label = document.createElement('span');
+				label.textContent = name;
+				label.style.marginRight = '6px';
 
 				const input = document.createElement('input');
-				input.className = 'item'; input.type = 'range'; input.min = 0; input.max = 100;
-				input.value = 0; input.style.marginRight = '12px';
-				// id-safe
-				const id = 'blend_' + name.replace(/[^a-z0-9]/gi, '_');
-				input.id = id;
+				input.className = 'item';
+				input.type = 'range';
+				input.min = 0;
+				input.max = 100;
+				input.value = 0;
+				input.style.marginRight = '12px';
 
-				input.addEventListener('input', (e) => applyBlendShape(name, e.target.value));
+				input.id = 'blend_' + name.replace(/[^a-z0-9]/gi, '_');
 
-				// initialize value from proxy or morphTargetInfluences
+				input.addEventListener('input', e =>
+					applyBlendShape(name, e.target.value)
+				);
+
+				// initialize slider value
 				let initVal = 0;
 				try {
-					if (currentVrm.blendShapeProxy && typeof currentVrm.blendShapeProxy.getValue === 'function') {
-						initVal = Math.round(currentVrm.blendShapeProxy.getValue(name) * 100);
+					if (currentVrm.blendShapeProxy?.getValue) {
+						initVal = Math.round(
+							currentVrm.blendShapeProxy.getValue(name) * 100
+						);
 					} else {
-						// find first mesh influence value
-						currentVrm.scene.traverse((obj) => {
+						currentVrm.scene.traverse(obj => {
 							if (!obj.isMesh || !obj.morphTargetDictionary || !obj.morphTargetInfluences) return;
-							const dict = obj.morphTargetDictionary;
-							const idx = dict[name];
+							const idx = obj.morphTargetDictionary[name];
 							if (idx !== undefined) {
-								initVal = Math.round((obj.morphTargetInfluences[idx] || 0) * 100);
+								initVal = Math.round(
+									(obj.morphTargetInfluences[idx] || 0) * 100
+								);
 							}
 						});
 					}
-				} catch (e) { }
+				} catch (_) {}
 
 				input.value = initVal;
-				container.appendChild(span);
+
+				container.appendChild(label);
 				container.appendChild(input);
 			});
 		}
+		// #endregion Blend Shape Controls
 
+		// #region Materials & Model Info
 		/**
 		 * Populate the Materials panel with materials used by the current VRM.
 		 * Shows a thumbnail (if texture present), download button and a visibility checkbox.
@@ -1132,6 +1230,86 @@
 			});
 		}
 
+		function populateModelInfo() {
+			const container = document.querySelector('#modelInfo .item-group-content');
+			if (!container) return;
+			container.innerHTML = '';
+
+			if (!currentVrm) {
+				container.textContent = 'Load a VRM to see model information.';
+				return;
+			}
+
+			const meta = currentVrm.meta;
+			const infoTable = document.createElement('table');
+			const addItem = (label, value) => {
+					const tr = document.createElement('tr');
+					const tdLabel = document.createElement('td');
+					tdLabel.style.fontWeight = 'bold';
+					tdLabel.style.borderBottom = '1px solid var(--border-light-color)'
+					tdLabel.textContent = label;
+					const tdValue = document.createElement('td');
+					tdValue.style.borderBottom = '1px solid var(--border-light-color)'
+					tdValue.textContent = value;
+					tr.appendChild(tdLabel);
+					tr.appendChild(tdValue);
+					infoTable.appendChild(tr);
+				};
+
+			if (meta.metaVersion == '0') {
+				// VRM 0.x
+
+				// avatar information
+				addItem('Title', meta.title || 'N/A');
+				addItem('Creator', meta.author || 'N/A');
+				addItem('Contact Information', meta.contactInformation || 'N/A');
+				addItem('Reference', meta.reference || 'N/A');
+				addItem('Version', meta.version || 'N/A');
+				addItem('VRM version', meta.metaVersion || 'N/A');
+				
+				// avatar personality
+				addItem('Allowed User Name', meta.allowedUserName || 'N/A');
+				addItem('Depictions of violence', meta.violentUssageName || 'No');
+				addItem('Depictions of sexual acts', meta.sexualUssageName || 'No');
+				addItem('Commercial use', meta.commercialUssageName || 'No');
+				addItem('Permission information URL', meta.otherPermissionUrl || 'N/A');
+
+				// redistribution and alteration
+				addItem('License', meta.licenseName || 'N/A');
+
+				container.appendChild(infoTable);
+			} else {
+				// VRM 1.x
+
+				// avatar information
+				addItem('Avatar name', meta.name || 'N/A');
+				addItem('Version', meta.version || 'N/A');
+				addItem('Authors', (meta.authors && meta.authors.length > 0) ? meta.authors.join(', ') : 'N/A');
+				addItem('Creator copyright', meta.copyrightInformation || 'N/A');
+				addItem('Contact Information', meta.contactInformation || 'N/A');
+				addItem('References', (meta.references && meta.references.length > 0) ? meta.references.join(', ') : 'N/A');
+				addItem('Third party licenses', meta.thirdPartyLicenses || 'N/A');
+
+				// avatar permission settings
+				addItem('Avatar use permission', meta.avatarPermission || 'N/A');
+				addItem('Violent usage', meta.allowExcessivelyViolentUsage ? 'Yes' : 'No');
+				addItem('Sexual usage', meta.allowExcessivelySexualUsage ? 'Yes' : 'No');
+				addItem('Political usage', meta.allowPoliticalOrReligiousUsage ? 'Yes' : 'No');
+				addItem('Antisocial usage', meta.allowAntisocialOrHateUsage ? 'Yes' : 'No');
+				addItem('Commercial usage', meta.commercialUsage || 'No');
+
+				// redistribution and alteration
+				addItem('Redistribution', meta.allowRedistribution ? 'Yes' : 'No');
+				addItem('Alterations', meta.modification || 'N/A');
+				addItem('Attribution', meta.creditNotation || 'N/A');
+			}
+
+			container.appendChild(infoTable);
+		}
+
+		// #endregion Materials & Model Info
+
+		// #region Animation Loop
 		// --- Animation Loop ---
 		const clock = new THREE.Clock();
 
@@ -1160,7 +1338,9 @@
 
 		// Start the animation loop
 		animate();
+		// #endregion Animation Loop
 
+		// #region Initial Load
 		// --- Initial Load ---
 		// Load the fixed VRM model when the page loads
 		window.addEventListener('DOMContentLoaded', async () => {
@@ -1171,7 +1351,9 @@
 			}
 			await loadVRMA(VRMA_ANIMATIONS['Standard'], 'Standard.vrma');
 			updateButtons(); // Update button states after VRM is loaded
+			if (!isMobile()) document.getElementById('controls-bar').classList.add('show');
 		});
+		// #endregion Initial Load
 	</script>
 </body>
 

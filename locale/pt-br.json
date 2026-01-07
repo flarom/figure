@@ -1,0 +1,24 @@
+{
+    "meta": {
+        "code": "pt-br",
+        "name": "Portuguese (Brazil)",
+        "nativeName": "Português do Brasil",
+        "direction": "ltr",
+        "status": "10%",
+        "translators": [
+            {
+                "name": "Flarom",
+                "role": "Translator",
+                "links": {
+                    "github": "https://github.com/flarom",
+                    "bluesky": "https://bsky.app/profile/flarom.neocities.org",
+                    "website": "https://flarom.neocities.org"
+                }
+            }
+        ]
+    },
+
+    "strings": {
+        
+    }
+}
