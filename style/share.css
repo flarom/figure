@@ -481,7 +481,7 @@ button.danger:hover {
 .item-group-header .icon-button {
     opacity: 0;
 }
-.item-group.expanded .item-group-header .icon-button,
+.item-group-header.expanded .icon-button,
 .item-group-header:hover .icon-button {
     opacity: 1;
 }

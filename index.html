@@ -3,9 +3,26 @@
 
 <head>
 	<meta charset="utf-8" />
-	<title>Figure - VRM Model Viewer</title>
-	<meta name="viewport"
-		content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<title>Figure — VRM & VRMA Model Viewer for Web</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+	<!-- seo -->
+	<meta name="description" content="Figure is a fast, lightweight web-based VRM and VRMA model viewer. Preview and inspect VRM characters directly in your browser."/>
+	<meta name="keywords" content="VRM viewer, VRMA viewer, VRM model viewer, VRoid model viewer, VRM web viewer, VRoid, VRoid Studio, VRoid Hub, VRM 1.0, VRM 0.0, 3D avatar viewer, VTuber tools" />
+	<meta name="author" content="Figure" />
+	<meta name="robots" content="index, follow" />
+	<meta name="language" content="en" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Figure — VRM & VRMA Model Viewer" />
+	<meta property="og:description" content="Preview VRM and VRMA models directly in your browser." />
+	<meta property="og:image" content="static/og-image.png" />
+	<meta property="og:url" content="https://flarom.github.io/figure" />
+	<meta property="og:site_name" content="Figure" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Figure — VRM & VRMA Model Viewer" />
+	<meta name="twitter:description" content="Preview VRM and VRMA models directly in your browser."/>
+	<meta name="twitter:image" content="static/og-image.png" />
+
 	<link rel="stylesheet" href="style/palette.css">
 	<link rel="stylesheet" href="style/share.css">
 	<link rel="stylesheet" href="style/prompts.css">
@@ -68,6 +85,31 @@
 				</div>
 				<div class="item-group-content collapsed">
 					
+				</div>
+			</div>
+		</div>
+		<div class="item-group">
+			<div id="lookControls">
+				<div class="item-group-header">
+					<div style="display: flex; align-items: center; gap: 6px;">
+						<span class="icon item-group-icon">visibility</span>
+						<strong>Look</strong>
+					</div>
+					<button class='icon-button' title="Reset look controls" id="resetLookBtn">
+						refresh
+					</button>
+				</div>
+				<div class="item-group-content collapsed">
+					<div style="display:flex;flex-direction:column;gap:8px;padding:8px;">
+						<label style="display:flex;align-items:center;gap:8px;">
+							<input type="checkbox" id="look_follow_camera" />
+							<span>Follow camera</span>
+						</label>
+						<div id="look_joystick" style="width:140px;height:140px;border:1px solid var(--border-light-color);border-radius:14px;position:relative;touch-action:none;box-shadow: var(--shadow-light);">
+							<div id="look_joystick_handle" style="width:28px;height:28px;border-radius:50%;background:var(--highlight-color);position:absolute;left:56px;top:56px;transform:translate(0,0);box-shadow:var(--shadow-light);"></div>
+						</div>
+						<div style="font-size:0.85em;opacity: 0.5;">Drag inside the box to aim eyes.</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -320,7 +362,7 @@
 			// Try to remove blob from IndexedDB as well
 			deleteVrmFromIdb().catch(() => { /* ignore */ });
 			vrmModelName.textContent = '';
-			document.title = 'Figure - VRM Model Viewer';
+			document.title = 'Figure — VRM & VRMA Model Viewer for Web';
 			vrmAuthorName.textContent = '';
 			statusDiv.textContent = 'Recent VRM removed.';
 		}
@@ -467,7 +509,6 @@
 							}
 
 							scene.add(vrm.scene);
-							// Rotate model to face forward
 							if (vrm.meta.metaVersion == '0') {
 								vrm.scene.rotation.y = Math.PI; // VRM 0.x
 							} else {
@@ -814,6 +855,197 @@
 		// Build the buttons now
 		populateVrmaButtons();
 
+		// #region Look controls
+		function createLookControls() {
+			const joystick = document.getElementById('look_joystick');
+			const handle = document.getElementById('look_joystick_handle');
+			const followChk = document.getElementById('look_follow_camera');
+			if (!joystick || !handle || !followChk) return;
+
+			let dragging = false;
+			let rect = null;
+			const maxRange = 2.0;
+			const maxYaw = 2.0;
+			const maxPitch = 2.0;
+			const pos = { x: 0, y: 0 };
+
+			function updateHandleFromPos() {
+				const h = handle;
+				const cx = (joystick.clientWidth - h.clientWidth) / 2;
+				const cy = (joystick.clientHeight - h.clientHeight) / 2;
+				const left = cx + pos.x * cx;
+				const top = cy + pos.y * cy;
+				h.style.left = Math.round(left) + 'px';
+				h.style.top = Math.round(top) + 'px';
+			}
+
+			function setPosFromClient(clientX, clientY) {
+				if (!rect) rect = joystick.getBoundingClientRect();
+				const x = ((clientX - rect.left) / rect.width) * 2 - 1;
+				const y = ((clientY - rect.top) / rect.height) * 2 - 1;
+				// clamp
+				pos.x = Math.max(-1, Math.min(1, x));
+				pos.y = Math.max(-1, Math.min(1, y));
+				updateHandleFromPos();
+				// apply to VRM if not following camera
+				if (!followChk.checked) applyJoystickToLook(pos.x, pos.y, maxYaw, maxPitch);
+			}
+
+			joystick.addEventListener('pointerdown', (e) => {
+				dragging = true; rect = joystick.getBoundingClientRect(); joystick.setPointerCapture(e.pointerId);
+				setPosFromClient(e.clientX, e.clientY);
+			});
+			window.addEventListener('pointermove', (e) => {
+				if (!dragging) return;
+				setPosFromClient(e.clientX, e.clientY);
+			});
+			window.addEventListener('pointerup', (e) => {
+				if (!dragging) return; dragging = false; rect = null;
+				if (!followChk.checked) applyJoystickToLook(pos.x, pos.y, maxYaw, maxPitch);
+			});
+
+			followChk.addEventListener('change', () => {
+				// when enabling follow camera, joystick is disabled visually
+				if (followChk.checked) {
+					handle.style.opacity = '0.4';
+					joystick.style.pointerEvents = 'none';
+					// enable lookAt target to follow the camera
+					if (currentVrm && currentVrm.lookAt) {
+						currentVrm.lookAt.target = camera;
+						currentVrm.lookAt.autoUpdate = true;
+					}
+				} else {
+					handle.style.opacity = '1';
+					applyJoystickToLook(pos.x, pos.y, maxYaw, maxPitch);
+					joystick.style.pointerEvents = 'auto';
+					// disable lookAt target so manual control is preserved
+					if (currentVrm && currentVrm.lookAt) {
+						currentVrm.lookAt.target = null;
+						currentVrm.lookAt.autoUpdate = false;
+					}
+				}
+			});
+		}
+
+		function applyJoystickToLook(nx, ny, maxYaw, maxPitch) {
+			if (!currentVrm || !currentVrm.lookAt) return;
+			try {
+				const yaw = nx * (maxYaw || 0.9);
+				const pitch = ny * (maxPitch || 0.6);
+				const yawDeg = THREE.MathUtils.radToDeg(yaw);
+				const pitchDeg = THREE.MathUtils.radToDeg(pitch);
+				// disable autoUpdate so manual control is preserved
+				if (currentVrm.lookAt) currentVrm.lookAt.autoUpdate = false;
+				currentVrm.lookAt.yaw = yawDeg;
+				currentVrm.lookAt.pitch = pitchDeg;
+				// console.log('applyJoystickToLook', { yaw: yawDeg, pitch: pitchDeg });
+				if (typeof currentVrm.lookAt.update === 'function') {
+					try { currentVrm.lookAt.update(0); } catch(e){ console.warn('lookAt.update failed', e); }
+				}
+			} catch (e) { /* ignore */ }
+		}
+
+		// helper to find bone by common names
+		function findBoneByNames(names) {
+			if (!currentVrm || !currentVrm.scene) return null;
+			for (const n of names) {
+				let byName = currentVrm.scene.getObjectByName(n);
+				if (byName) return byName;
+			}
+			// fallback: search by substring
+			let found = null;
+			currentVrm.scene.traverse(obj => { if (!found && obj.name && names.some(s=>obj.name.indexOf(s)>=0)) found = obj; });
+			return found;
+		}
+
+		function setBoneLookAt(bone, targetVec3, weight = 0.6) {
+			if (!bone) return;
+			const boneWorldPos = bone.getWorldPosition(new THREE.Vector3());
+			const m = new THREE.Matrix4();
+			m.lookAt(boneWorldPos, targetVec3, bone.up || new THREE.Vector3(0,1,0));
+			const targetWorldQuat = new THREE.Quaternion().setFromRotationMatrix(m);
+			const parent = bone.parent;
+			let parentWorldQuat = new THREE.Quaternion();
+			if (parent) parent.getWorldQuaternion(parentWorldQuat); else parentWorldQuat.identity();
+			const parentWorldQuatInv = parentWorldQuat.clone().invert();
+			const targetLocalQuat = parentWorldQuatInv.multiply(targetWorldQuat);
+			bone.quaternion.slerp(targetLocalQuat, weight);
+		}
+
+		function updateLookControl(delta) {
+			// priority: follow camera checkbox -> joystick
+			const follow = document.getElementById('look_follow_camera');
+			if (!currentVrm || !currentVrm.lookAt) return;
+			if (follow && follow.checked) {
+				// compute yaw/pitch towards camera from head bone
+				let headBone = findBoneByNames(['J_Bip_C_Head','Head','head']);
+				if (!headBone && currentVrm.humanoid && currentVrm.humanoid.getBoneNode) {
+					try { headBone = currentVrm.humanoid.getBoneNode('head'); } catch(e){}
+				}
+				const headPos = headBone ? headBone.getWorldPosition(new THREE.Vector3()) : currentVrm.scene.getWorldPosition(new THREE.Vector3());
+				const dir = camera.position.clone().sub(headPos).normalize();
+				let headQuat = new THREE.Quaternion(); if (headBone) headBone.getWorldQuaternion(headQuat); else headQuat.identity();
+				const inv = headQuat.clone().invert();
+				const localDir = dir.clone().applyQuaternion(inv);
+				const yaw = Math.atan2(localDir.x, localDir.z);
+				const pitch = Math.atan2(-localDir.y, Math.sqrt(localDir.x*localDir.x + localDir.z*localDir.z));
+				const yawDeg = THREE.MathUtils.radToDeg(yaw);
+				const pitchDeg = THREE.MathUtils.radToDeg(pitch);
+				currentVrm.lookAt.yaw = yawDeg;
+				currentVrm.lookAt.pitch = pitchDeg;
+				// console.log('updateLookControl follow-camera', { yaw: yawDeg, pitch: pitchDeg });
+				if (typeof currentVrm.lookAt.update === 'function') {
+					try { currentVrm.lookAt.update(delta || 0); } catch(e) { console.warn('lookAt.update failed', e); }
+				}
+			}
+		}
+
+		const resetLookBtn = document.getElementById('resetLookBtn');
+		if (resetLookBtn) { resetLookBtn.addEventListener('click', resetLookControls); }
+
+		function resetLookControls() {
+			const joystick = document.getElementById('look_joystick');
+			const handle = document.getElementById('look_joystick_handle');
+			const followChk = document.getElementById('look_follow_camera');
+			
+			if (!currentVrm || !currentVrm.lookAt) return;
+			currentVrm.lookAt.yaw = 0;
+			currentVrm.lookAt.pitch = 0;
+			if (typeof currentVrm.lookAt.update === 'function') {
+				try { currentVrm.lookAt.update(0); } catch(e) { console.warn('lookAt.update failed', e); }
+			}
+
+			// reset joystick position
+			if (handle && joystick) {
+				handle.style.left = ((joystick.clientWidth - handle.clientWidth) / 2) + 'px';
+				handle.style.top = ((joystick.clientHeight - handle.clientHeight) / 2) + 'px';
+				currentVrm.lookAt.yaw = 0;
+				currentVrm.lookAt.pitch = 0;
+			}
+			// uncheck follow camera
+			if (followChk) {
+				followChk.checked = false;
+				currentVrm.lookAt.autoUpdate = false;
+
+				// re-enable joystick interaction, in case it was disabled
+				handle.style.opacity = '1';
+				applyJoystickToLook(pos.x, pos.y, maxYaw, maxPitch);
+				joystick.style.pointerEvents = 'auto';
+				// disable lookAt target so manual control is preserved
+				if (currentVrm && currentVrm.lookAt) {
+					currentVrm.lookAt.target = null;
+					currentVrm.lookAt.autoUpdate = false;
+				}
+				currentVrm.lookAt.yaw = 0;
+				currentVrm.lookAt.pitch = 0;
+			}
+		}
+
+		// instantiate look controls
+		createLookControls();
+
+		// #endregion Look controls
+
 		// Toggle play/pause button handler
 		function setPlayPauseIcon(isPlaying) {
 			if (!playPauseBtn) return;
@@ -1009,6 +1241,7 @@
 				h.setAttribute('role', 'button');
 				h.tabIndex = 0;
 				h.addEventListener('click', () => {
+					h.classList.toggle('expanded');
 					content.classList.toggle('expanded');
 					content.classList.toggle('collapsed');
 				});
@@ -1305,6 +1538,9 @@
 			requestAnimationFrame(animate);
 
 			const deltaTime = clock.getDelta();
+
+			// Update look controls (joystick / follow camera)
+			try { updateLookControl(deltaTime); } catch (e) { /* ignore if not initialized */ }
 
 			// Update VRM and AnimationMixer
 			if (currentVrm) {
