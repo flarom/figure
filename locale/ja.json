@@ -1,0 +1,52 @@
+{
+    "meta": {
+        "code": "ja",
+        "name": "Japanese",
+        "nativeName": "日本語",
+        "direction": "ltr",
+        "status": "10%",
+        "translators": [
+            {
+                "name": "AI generated",
+                "role": "",
+                "links": {}
+            }
+        ]
+    },
+
+    "strings": {
+        "COMMON": {
+            "common.ok": "OK",
+            "common.cancel": "キャンセル",
+            "common.close": "閉じる",
+            "common.yes": "はい",
+            "common.no": "いいえ",
+            "common.back": "戻る"
+        },
+        "DIALOGS": {
+            "ABOUT": {
+                "dialogs.about.main.report-an-issue": "問題を報告する",
+                "dialogs.about.main.credits": "クレジット",
+                "dialogs.about.main.legal": "法的情報",
+                "dialogs.about.credits.libraries": "ライブラリ",
+                "dialogs.about.credits.libraries.vrm-viewer": "VRMビューアー",
+                "dialogs.about.credits.libraries.3d-renderer": "3Dレンダラー",
+                "dialogs.about.credits.graphics": "グラフィックス",
+                "dialogs.about.credits.graphics.symbolic-icons": "シンボリックアイコン",
+                "dialogs.about.credits.graphics.colored-icons": "カラフルアイコン",
+                "dialogs.about.credits.general-inspiration": "一般的なインスピレーション",
+                "dialogs.about.credits.general-inspiration.design-guidelines": "デザインガイドライン",
+                "dialogs.about.legal.notice": "このアプリケーションは一切の保証を提供しません。{licenseLink}の下でライセンスされています。"
+            },
+            "SETTINGS": {
+                "dialogs.settings.main.appearence": "外観",
+                "dialogs.settings.main.appearence.theme.light": "明るい",
+                "dialogs.settings.main.appearence.theme.dark": "暗い",
+                "dialogs.settings.main.appearence.theme.oled": "OLED",
+                "dialogs.settings.main.language": "言語",
+                "dialogs.settings.main.translating": "Figureの翻訳を手伝う",
+                "dialogs.settings.main.status-bar": "ステータスバー"
+            }
+        }
+    }
+}

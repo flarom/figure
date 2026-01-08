@@ -4,8 +4,6 @@
 }
 
 .theme-dark {
-    --active-line:          #303030;
-
     --background-color:     #282828;
     --background-color-2:   #303030;
     --background-color-3:   #454545;
@@ -51,8 +49,6 @@
 }
 
 .theme-light {
-    --active-line:          #eeeeee;
-
     --background-color:     #f5f5f5;
     --background-color-2:   #ffffff;
     --background-color-3:   #f5f5f5;
@@ -95,4 +91,49 @@
     --color-yellow-bg:      #ece5cb;
     --color-orange-bg:      #f0dccb;
     --color-red-bg:         #eccbcb;
+}
+
+.theme-oled {
+    --background-color:     #000000;
+    --background-color-2:   #000000;
+    --background-color-3:   #000000;
+
+    --field-color:          oklab(0.2 0 0);
+
+    --border-dark-color:    oklab(0.3 0 0);
+    --border-light-color:   oklab(0.3 0 0);
+    --border-field-color:   oklab(0.3 0 0);
+
+    --hover-color:          oklab(0.4 0 0);
+
+    --title-color:          #ffffff;
+    --button-color:         #ffffff;
+    --button-color-2:       #ffffff;
+    --text-color:           #dddddd;
+
+    --highlight-color:      #3584e4; 
+    --selection-color:      #3584e433;
+    --link-color:           #99c1f1;
+
+    --danger:               #ff8881; 
+    --danger-bg:            #ff888133;
+
+    --shadow:               0px 0px 10px #00000055;
+    --shadow-light:         0px 1px 3px rgba(0, 0, 0, 0.1);
+    
+    --color-pink:           #ff66ad;
+    --color-purple:         #dd92ff; 
+    --color-blue:           #818eff;
+    --color-green:          #9aff81; 
+    --color-yellow:         #fff781;
+    --color-orange:         #ffb347;
+    --color-red:            #ff8881;
+
+    --color-pink-bg:        #4b2a3a;
+    --color-purple-bg:      #4b3a53; 
+    --color-blue-bg:        #3a3c51;
+    --color-green-bg:       #3f533a; 
+    --color-yellow-bg:      #53513a;
+    --color-orange-bg:      #533f2a;
+    --color-red-bg:         #533b3a;
 }

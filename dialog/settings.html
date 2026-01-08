@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Settings</title>
+        <style>
+            button.ball {
+                width: 64px;
+                height: 64px;
+                border-radius: 32px;
+                cursor: pointer;
+                border: 0;
+                transition: border-radius 0.3s, filter 0.3s;
+            }
+
+            button.ball:hover {
+                border-radius: 15px;
+                filter: brightness(1.1);
+            }
+
+            button.ball.selected {
+                outline: 2px solid var(--highlight-color);
+                border: 4px solid var(--background-color-2);
+                box-shadow: var(--shadow);
+            }
+
+            .setting select {
+                max-width: 300px;
+                margin-bottom: 0px;
+                padding: 0px 20px;
+                box-sizing: content-box;
+            }
+
+            .setting .infolink {
+                font-size: small;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="settings-body" id="setting-body">
+            <div class="main-page">
+                <div>
+                    <h4 class="setting-group-title" data-locale="dialogs.settings.main.appearence">Appearence</h4>
+                    <div class="setting top bottom" style="gap: 10px; flex-wrap: wrap; justify-content: flex-start;">
+                        <button id="theme-light" class="ball" data-locale="dialogs.settings.main.appearence.theme.light" style="background-color: #ffffff; color: #3c3c3c" onclick="Settings.setSetting('theme', 'theme-light'); location.reload();">Light</button>
+                        <button id="theme-dark" class="ball" data-locale="dialogs.settings.main.appearence.theme.dark" style="background-color: #303030; color: #dddddd" onclick="Settings.setSetting('theme', 'theme-dark'); location.reload();">Dark</button>
+                        <button id="theme-oled" class="ball" data-locale="dialogs.settings.main.appearence.theme.oled" style="background-color: #000000; color: #888888" onclick="Settings.setSetting('theme', 'theme-oled'); location.reload();">OLED</button>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="setting-group-title" data-locale="dialogs.settings.main.language">Language</h4>
+                    <div class="setting top">
+                        <span class="switch-text" data-locale="dialogs.settings.main.language">Language</span>
+                        <select id="language" onchange="Language.set(this.value)">
+                            <option value="en">(EN) English</option>
+                            <option value="ja">(JA) 日本語</option>
+                            <option value="pt-br">(PT-BR) Português do Brasil</option>
+                        </select>
+                    </div>
+                    <div class="setting bottom">
+                        <span style="display: flex; align-items: center; gap: 5px;"><span class="icon">info</span>
+                        <a href="https://github.com/flarom/figure/wiki/Translating" class="infolink" data-locale="dialogs.settings.main.translating" target="_blank">Help translating Figure</a></span>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="setting-group-title" data-locale="dialogs.settings.main.status-bar">Status bar</h4>
+                    <div class="setting top bottom switch-wrapper">
+                        <span class="switch-text" data-locale="dialogs.settings.main.status-bar">Status bar</span>
+                        <label class="switch">
+                            <input type="checkbox" id="statusShow" onchange="Settings.setSetting('statusShow', this.checked); loadSettings()" />
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            (() => {
+                // lang
+                const selLanguage = document.getElementById("language");
+                selLanguage.value = Settings.getSetting("language", 'en')
+
+                // status bar
+                const cbxStatusShow = document.getElementById("statusShow");
+                if (Settings.getSetting("statusShow", "true") === "true") cbxStatusShow.checked = "true";
+            })();
+
+            updateSelectedTheme();
+
+            function updateSelectedTheme() {
+                const theme = Settings.getSetting("theme", "theme-dark");
+                document.querySelectorAll("button.ball").forEach(btn => btn.classList.remove("selected"));
+                const selectedBtn = document.getElementById(theme);
+                if (selectedBtn) selectedBtn.classList.add("selected");
+            }
+        </script>
+    </body>
+</html>

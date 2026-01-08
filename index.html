@@ -42,15 +42,18 @@
 		</div>
 		<div class="header-right">
 			<button class="icon-button" translate="no" id="playPauseBtn" title="Play / Pause animation (P)" disabled>play_arrow</button>
-			<hr>
-			<button class="icon-button" translate="no" id="stopBtn" title="Stop animation" disabled>accessibility</button>
-			<button class="icon-button" translate="no" id="resetCameraBtn" title="Reset camera (R)">refresh</button>
+			<button class="icon-button" translate="no" id="resetCameraBtn" title="Reset camera (R)">reset_focus</button>
 			<hr>
 			<div class="dropdown">
 				<button class="icon-button" translate="no" onmousedown="toggleDropdown('more-menu')">more_vert</button>
 				<div class="dropdown-content menu" id="more-menu">
 					<button class="text-button" id="modelInfoBtn">
 						<span>Model information</span>
+					</button>
+					<hr>
+					<button class="text-button" onmouseup="showMessageFromFile('dialog/settings.html', true, false, true, true, 600); hideAllMenus()">
+						<span>Settings</span>
+						<kbd>Ctrl+,</kbd>
 					</button>
 					<hr>
 					<button class="text-button" onmouseup="showMessageFromFile('dialog/about.html'); hideAllMenus()">
@@ -70,6 +73,7 @@
 							<span class="icon item-group-icon">directions_walk</span>
 							<strong>Animations</strong>
 						</div>
+						<button class="icon-button" translate="no" id="stopBtn" title="Stop animation" disabled>accessibility</button>
 					</div>
 					<div class="item-group-content collapsed">
 					</div>
@@ -82,6 +86,7 @@
 						<span class="icon item-group-icon">mood</span>
 						<strong>Expressions</strong>
 					</div>
+					<button class='icon-button' title="Reset expression" id="resetExpressionBtn">refresh</button>
 				</div>
 				<div class="item-group-content collapsed">
 					
@@ -95,9 +100,7 @@
 						<span class="icon item-group-icon">visibility</span>
 						<strong>Look</strong>
 					</div>
-					<button class='icon-button' title="Reset look controls" id="resetLookBtn">
-						refresh
-					</button>
+					<button class='icon-button' title="Reset look controls" id="resetLookBtn">refresh</button>
 				</div>
 				<div class="item-group-content collapsed">
 					<div style="display:flex;flex-direction:column;gap:8px;padding:8px;">
@@ -218,6 +221,9 @@
 		const rootBg = getComputedStyle(document.documentElement).getPropertyValue('--background-color').trim();
 		const cssBg = bodyBg || rootBg || '#222222';
 		scene.background = new THREE.Color(cssBg);
+		
+		// Expose scene to non-module scripts for compatibility / debugging.
+		window.scene = scene;
 
 		const light = new THREE.DirectionalLight(0xffffff, 3.0); // Increased intensity
 		light.position.set(0.5, 1.0, 1.0).normalize();
@@ -364,7 +370,7 @@
 			vrmModelName.textContent = '';
 			document.title = 'Figure — VRM & VRMA Model Viewer for Web';
 			vrmAuthorName.textContent = '';
-			statusDiv.textContent = 'Recent VRM removed.';
+			showToast('Recent VRM removed.', 'info');
 		}
 		// #endregion Last VRM Persistence
 
@@ -482,7 +488,7 @@
 		 */
 		async function loadVRM(url, displayName, fileObject) {
 			try {
-				statusDiv.textContent = 'Loading VRM model...';
+				showToast('Loading VRM model', 'folder_shared');
 
 				return new Promise((resolve, reject) => {
 					loader.load(
@@ -539,7 +545,7 @@
 								}
 							} catch (e) { /* ignore bounding errors */ }
 
-							statusDiv.textContent = 'VRM model loaded successfully!';
+							showToast('Model loaded successfully!', 'person_check');
 							console.log('VRM loaded:', vrm);
 
 							updateButtons();
@@ -752,8 +758,6 @@
 				}
 				// reset play/pause icon to play
 				setPlayPauseIcon(false);
-
-				statusDiv.textContent = 'Animation stopped.';
 			}
 		}
 		// #endregion Animation Controls
@@ -1041,6 +1045,21 @@
 			}
 		}
 
+		const resetExpressionBtn = document.getElementById('resetExpressionBtn');
+		if (resetExpressionBtn) { resetExpressionBtn.addEventListener('click', resetExpressionControls); }
+
+		function resetExpressionControls() {
+			const container = document.querySelector('#blendShapeRanges .item-group-content');
+			if (container) {
+				const inputs = container.querySelectorAll('input[type="range"]');
+				inputs.forEach(input => {
+					input.value = '0';
+					const blendshapeName = input.id.replace('blend_', '');
+					applyBlendShape(blendshapeName, 0);
+				});
+			}
+		}
+
 		// instantiate look controls
 		createLookControls();
 
@@ -1066,7 +1085,6 @@
 			// Toggle paused state
 			currentAction.paused = !currentAction.paused;
 			setPlayPauseIcon(!currentAction.paused);
-			statusDiv.textContent = currentAction.paused ? 'Animation paused' : 'Animation playing...';
 		}
 
 		if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
@@ -1146,7 +1164,7 @@
 					URL.revokeObjectURL(url);
 				}
 			} else {
-				statusDiv.textContent = 'Arquivo não suportado. Solte um .vrm ou .vrma.';
+				showToast('File not supported', 'error');
 			}
 		}
 
@@ -1578,6 +1596,39 @@
 			if (!isMobile()) document.getElementById('controls-bar').classList.add('show');
 		});
 		// #endregion Initial Load
+	</script>
+
+	<script>
+		const statusBar = document.getElementById('status');
+
+		// #region settings
+
+		function loadSettings() {
+			// theme
+			const theme = Settings.getSetting("theme");
+			if (theme) document.body.className = theme;
+			if (Settings.getSetting("theme") === "theme-custom") {
+				applyCustomTheme(Settings.getSetting("theme-custom-value", ""));
+			}
+
+			// status bar
+			if (Settings.getSetting("statusShow", "true") != "true") statusBar.classList.remove('show');
+			else statusBar.classList.add('show');
+		}
+
+		loadSettings();
+
+		function applyCustomTheme(cssText) {
+			let styleEl = document.getElementById("custom-theme-style");
+			if (!styleEl) {
+				styleEl = document.createElement("style");
+				styleEl.id = "custom-theme-style";
+				document.head.appendChild(styleEl);
+			}
+			styleEl.textContent = `.theme-custom { ${cssText} }`;
+		}
+
+		// #endregion settings
 	</script>
 </body>
 

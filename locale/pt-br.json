@@ -19,6 +19,38 @@
     },
 
     "strings": {
-        
+        "COMMON": {
+            "common.ok": "OK",
+            "common.cancel": "Cancelar",
+            "common.close": "Fechar",
+            "common.yes": "Sim",
+            "common.no": "Não",
+            "common.back": "Voltar"
+        },
+        "DIALOGS": {
+            "ABOUT": {
+                "dialogs.about.main.report-an-issue": "Relatar um problema",
+                "dialogs.about.main.credits": "Créditos",
+                "dialogs.about.main.legal": "Informações legais",
+                "dialogs.about.credits.libraries": "Bibliotecas",
+                "dialogs.about.credits.libraries.vrm-viewer": "Visualizador de VRM",
+                "dialogs.about.credits.libraries.3d-renderer": "Renderizador 3D",
+                "dialogs.about.credits.graphics": "Gráficos",
+                "dialogs.about.credits.graphics.symbolic-icons": "Ícones simbólicos",
+                "dialogs.about.credits.graphics.colored-icons": "Ícones coloridos",
+                "dialogs.about.credits.general-inspiration": "Inspiração geral",
+                "dialogs.about.credits.general-inspiration.design-guidelines": "Diretrizes de design",
+                "dialogs.about.legal.notice": "Este aplicativo não oferece absolutamente nenhuma garantia. Ele é licenciado sob a {licenseLink}."
+            },
+            "SETTINGS": {
+                "dialogs.settings.main.appearence": "Aparência",
+                "dialogs.settings.main.appearence.theme.light": "Claro",
+                "dialogs.settings.main.appearence.theme.dark": "Escuro",
+                "dialogs.settings.main.appearence.theme.oled": "OLED",
+                "dialogs.settings.main.language": "Idioma",
+                "dialogs.settings.main.translating": "Ajude a traduzir o Figure",
+                "dialogs.settings.main.status-bar": "Barra de status"
+            }
+        }
     }
 }
