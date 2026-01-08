@@ -32,6 +32,10 @@
 			<div class="dropdown">
 				<button class="icon-button" translate="no" onmousedown="toggleDropdown('more-menu')">more_vert</button>
 				<div class="dropdown-content menu" id="more-menu">
+					<button class="text-button" id="modelInfoBtn">
+						<span>Model information</span>
+					</button>
+					<hr>
 					<button class="text-button" onmouseup="showMessageFromFile('dialog/about.html'); hideAllMenus()">
 						<span>About Figure</span>
 						<kbd>F1</kbd>
@@ -42,18 +46,6 @@
 	</header>
 
 	<div id="controls-bar" class="sidebar">
-		<div class="item-group">
-			<div id="modelInfo">
-				<div class="item-group-header">
-					<div style="display: flex; align-items: center; gap: 6px;">
-						<span class="icon item-group-icon">info</span>
-						<strong>Model information</strong>
-					</div>
-				</div>
-				<div class="item-group-content collapsed">
-				</div>
-			</div>
-		</div>
 		<div class="item-group">
 			<div id="vrmaButtons">
 					<div class="item-group-header">
@@ -141,6 +133,7 @@
 		const vrmAuthorName = document.getElementById('vrm-author-name');
 		const openFileBtn = document.getElementById('openFileBtn');
 		const fileInput = document.getElementById('fileInput');
+		const modelInfoBtn = document.getElementById('modelInfoBtn');
 
 		attachItemGroupToggles();
 		// #endregion DOM Elements
@@ -510,14 +503,61 @@
 
 							updateButtons();
 
+							// Try to populate thumbnail from glTF images (safe path: uri or bufferView)
+							try {
+								const metaObj = currentVrm.meta || {};
+								const hasThumb = metaObj.thumbnailImage || metaObj.texture || metaObj.thumbnail || metaObj.icon;
+								if (!hasThumb && gltf && gltf.parser && gltf.parser.json && Array.isArray(gltf.parser.json.images)) {
+									const imgs = gltf.parser.json.images;
+									let idx = imgs.findIndex(im => im && ((im.name && /thumbnail/i.test(im.name)) || (im.uri && /thumbnail/i.test(im.uri))));
+									if (idx === -1) idx = imgs.findIndex(im => im && (im.name && /thumb/i.test(im.name)));
+									if (idx >= 0) {
+										const info = imgs[idx];
+										if (info.uri) {
+											// Resolve relative URIs against model URL
+											let src = info.uri;
+											try { src = new URL(info.uri, url).href; } catch (_) { /* ignore */ }
+											const img = new Image();
+											img.crossOrigin = 'Anonymous';
+											img.onload = () => {
+												if (!currentVrm.meta) currentVrm.meta = {};
+												currentVrm.meta.icon = { image: img };
+												updateFavicon();
+											};
+											img.onerror = () => { /* ignore load errors */ };
+											img.src = src;
+										} else if (info.bufferView !== undefined) {
+											// load raw bufferView and create blob URL without using getDependency('image')
+											const bvIndex = info.bufferView;
+											gltf.parser.getDependency('bufferView', bvIndex).then((arrayBuffer) => {
+												try {
+													const mime = info.mimeType || 'image/png';
+													const blob = new Blob([arrayBuffer], { type: mime });
+													const objUrl = URL.createObjectURL(blob);
+													const img = new Image();
+													img.crossOrigin = 'Anonymous';
+													img.onload = () => {
+														URL.revokeObjectURL(objUrl);
+														if (!currentVrm.meta) currentVrm.meta = {};
+														currentVrm.meta.icon = { image: img };
+														updateFavicon();
+													};
+													img.onerror = () => { URL.revokeObjectURL(objUrl); };
+													img.src = objUrl;
+												} catch (e) { /* ignore */ }
+										}).catch(() => { /* ignore bufferView errors */ });
+										}
+									}
+								}
+							} catch (e) { console.warn('thumbnail extraction failed (safe):', e); }
+							// call updateFavicon immediately to set fallback; async image load may replace it
+							updateFavicon();
+
 							// Populate blend shape controls for the loaded VRM
 							try { populateBlendShapeControls(); } catch (e) { console.warn('populateBlendShapeControls failed:', e); }
 
 							// Populate materials list
 							try { populateMaterials(); } catch (e) { console.warn('populateMaterials failed:', e); }
-
-							// Populate model info
-							try { populateModelInfo(); } catch (e) { console.warn('populateModelInfo failed:', e); }
 
 							// Save last VRM reference to localStorage (attempt to persist)
 							try { saveLastVrm(fileObject, url, displayName || (url && url.split('/').pop())); } catch (e) { console.warn(e); }
@@ -695,6 +735,24 @@
 			stopBtn.disabled = !(hasVrm && hasVrma);
 		}
 
+		function updateFavicon() {
+			const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
+			link.rel = 'icon';
+			if (currentVrm && currentVrm.meta && currentVrm.meta.icon) {
+				// Convert the VRM icon (THREE.Texture) to a data URL
+				const canvas = document.createElement('canvas');
+				canvas.width = currentVrm.meta.icon.image.width;
+				canvas.height = currentVrm.meta.icon.image.height;
+				const ctx = canvas.getContext('2d');
+				ctx.drawImage(currentVrm.meta.icon.image, 0, 0);
+				link.href = canvas.toDataURL('image/png');
+			} else {
+				// Fallback to default favicon
+				link.href = './static/favicon.svg';
+			}
+			document.getElementsByTagName('head')[0].appendChild(link);
+		}
+
 		// Add event listeners for VRMA animation buttons (lookup by key instead of array index)
 		function normalizeKey(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
 		const animationKeys = Object.keys(VRMA_ANIMATIONS || {});
@@ -815,6 +873,14 @@
 		}
 
 		if (resetCameraBtn) resetCameraBtn.addEventListener('click', () => smoothResetCamera(600));
+
+		if (modelInfoBtn) {
+			modelInfoBtn.addEventListener('mouseup', () => {
+				closeAllDialogs();
+				hideAllMenus();
+				showVRMMeta(currentVrm);
+			});
+		}
 
 		window.addEventListener('resize', () => {
 			camera.aspect = window.innerWidth / window.innerHeight;
@@ -1105,7 +1171,7 @@
 		}
 		// #endregion Blend Shape Controls
 
-		// #region Materials & Model Info
+		// #region Materials
 		/**
 		 * Populate the Materials panel with materials used by the current VRM.
 		 * Shows a thumbnail (if texture present), download button and a visibility checkbox.
@@ -1229,85 +1295,7 @@
 				container.appendChild(entry);
 			});
 		}
-
-		function populateModelInfo() {
-			const container = document.querySelector('#modelInfo .item-group-content');
-			if (!container) return;
-			container.innerHTML = '';
-
-			if (!currentVrm) {
-				container.textContent = 'Load a VRM to see model information.';
-				return;
-			}
-
-			const meta = currentVrm.meta;
-			const infoTable = document.createElement('table');
-			const addItem = (label, value) => {
-					const tr = document.createElement('tr');
-					const tdLabel = document.createElement('td');
-					tdLabel.style.fontWeight = 'bold';
-					tdLabel.style.borderBottom = '1px solid var(--border-light-color)'
-					tdLabel.textContent = label;
-					const tdValue = document.createElement('td');
-					tdValue.style.borderBottom = '1px solid var(--border-light-color)'
-					tdValue.textContent = value;
-					tr.appendChild(tdLabel);
-					tr.appendChild(tdValue);
-					infoTable.appendChild(tr);
-				};
-
-			if (meta.metaVersion == '0') {
-				// VRM 0.x
-
-				// avatar information
-				addItem('Title', meta.title || 'N/A');
-				addItem('Creator', meta.author || 'N/A');
-				addItem('Contact Information', meta.contactInformation || 'N/A');
-				addItem('Reference', meta.reference || 'N/A');
-				addItem('Version', meta.version || 'N/A');
-				addItem('VRM version', meta.metaVersion || 'N/A');
-				
-				// avatar personality
-				addItem('Allowed User Name', meta.allowedUserName || 'N/A');
-				addItem('Depictions of violence', meta.violentUssageName || 'No');
-				addItem('Depictions of sexual acts', meta.sexualUssageName || 'No');
-				addItem('Commercial use', meta.commercialUssageName || 'No');
-				addItem('Permission information URL', meta.otherPermissionUrl || 'N/A');
-
-				// redistribution and alteration
-				addItem('License', meta.licenseName || 'N/A');
-
-				container.appendChild(infoTable);
-			} else {
-				// VRM 1.x
-
-				// avatar information
-				addItem('Avatar name', meta.name || 'N/A');
-				addItem('Version', meta.version || 'N/A');
-				addItem('Authors', (meta.authors && meta.authors.length > 0) ? meta.authors.join(', ') : 'N/A');
-				addItem('Creator copyright', meta.copyrightInformation || 'N/A');
-				addItem('Contact Information', meta.contactInformation || 'N/A');
-				addItem('References', (meta.references && meta.references.length > 0) ? meta.references.join(', ') : 'N/A');
-				addItem('Third party licenses', meta.thirdPartyLicenses || 'N/A');
-
-				// avatar permission settings
-				addItem('Avatar use permission', meta.avatarPermission || 'N/A');
-				addItem('Violent usage', meta.allowExcessivelyViolentUsage ? 'Yes' : 'No');
-				addItem('Sexual usage', meta.allowExcessivelySexualUsage ? 'Yes' : 'No');
-				addItem('Political usage', meta.allowPoliticalOrReligiousUsage ? 'Yes' : 'No');
-				addItem('Antisocial usage', meta.allowAntisocialOrHateUsage ? 'Yes' : 'No');
-				addItem('Commercial usage', meta.commercialUsage || 'No');
-
-				// redistribution and alteration
-				addItem('Redistribution', meta.allowRedistribution ? 'Yes' : 'No');
-				addItem('Alterations', meta.modification || 'N/A');
-				addItem('Attribution', meta.creditNotation || 'N/A');
-			}
-
-			container.appendChild(infoTable);
-		}
-
-		// #endregion Materials & Model Info
+		// #endregion Materials
 
 		// #region Animation Loop
 		// --- Animation Loop ---

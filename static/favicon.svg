@@ -5,7 +5,7 @@
    width="128px"
    version="1.1"
    id="svg45"
-   sodipodi:docname="test.svg"
+   sodipodi:docname="favicon.svg"
    inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -394,7 +394,7 @@
      d="m 20,12 h 88 c 4.41797,0 8,3.582031 8,8 v 88 c 0,4.41797 -3.58203,8 -8,8 H 20 c -4.417969,0 -8,-3.58203 -8,-8 V 20 c 0,-4.417969 3.582031,-8 8,-8 z m 0,0"
      fill="#f6f5f4"
      id="path20"
-     style="display:inline" />
+     style="display:inline;fill:#ffffff" />
   <path
      d="M 106,20 H 22 c -1.105469,0 -2,0.894531 -2,2 v 64 c 0,1.105469 0.894531,2 2,2 h 84 c 1.10547,0 2,-0.894531 2,-2 V 22 c 0,-1.105469 -0.89453,-2 -2,-2 z m 0,0"
      fill="url(#e)"
