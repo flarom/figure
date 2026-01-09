@@ -185,7 +185,7 @@
     margin-bottom: 15px;
 }
 
-.prompt-dialog input {
+input {
     background: var(--field-color);
     color: var(--text-color);
     width: calc(100% - 40px);
@@ -197,16 +197,69 @@
     border-radius: 15px;
 }
 
-.prompt-dialog select {
+select {
     width: 100%;
+    max-width: 200px;
     height: 35px;
     border-radius: 15px;
     border: 1px solid var(--border-field-color);
     background: var(--field-color);
     color: var(--text-color);
-    margin-bottom: 15px;
     padding: 0px 10px;
     outline: none;
+}
+
+
+.joystick-container {
+    width:140px;
+    height:140px;
+    border:1px solid var(--border-field-color);
+    border-radius:14px;
+    position:relative;
+    box-shadow: var(--shadow-light);
+    background-color: var(--field-color);
+}
+
+.joystick-handle {
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    background:var(--button-color-2);
+    position:absolute;
+    left:56px;
+    top:56px;
+    transform:translate(0,0);
+    box-shadow:var(--shadow-light);
+}
+
+input[type="range"] {
+    width: 160px;
+    padding: 0;
+    border: 0;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 6px;
+    background: var(--border-light-color);
+    outline: none;
+    cursor: pointer;
+}
+input[type="range"]::-moz-range-thumb,
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border-light-color);
+    background: var(--button-color-2);
+    cursor: pointer;
+    box-shadow: var(--shadow-light);
+}
+
+input[type="range"]::-moz-range-progress {
+    height: 6px;
+    border-radius: 5px;
+    background: var(--highlight-color);
 }
 
 .prompt-buttons {
@@ -424,20 +477,20 @@
     color: var(--title-color);
 }
 
-.prompt-dialog .switch {
+.switch {
     position: relative;
     display: inline-block;
-    width: 46px;
+    min-width: 46px;
     height: 26px;
 }
 
-.prompt-dialog .switch input {
+.switch input {
     opacity: 0 !important;
     width: 0 !important;
     height: 0 !important;
 }
 
-.prompt-dialog .slider {
+.slider {
     position: absolute;
     cursor: pointer;
     top: 0;
@@ -449,7 +502,7 @@
     border-radius: 999px;
 }
 
-.prompt-dialog .slider:before {
+.slider:before {
     position: absolute;
     content: "";
     height: 18px;
@@ -459,35 +512,36 @@
     background-color: var(--text-color);
     transition: 0.1s;
     border-radius: 50%;
+    box-shadow: var(--shadow-light);
 }
 
-.prompt-dialog input:checked + .slider {
+input:checked + .slider {
     background-color: var(--highlight-color);
 }
 
-.prompt-dialog input:checked + .slider:before {
+input:checked + .slider:before {
     background-color:var(--button-color-2);
     transform: translateX(20px);
 }
 
-.prompt-dialog .switch-wrapper {
+.switch-wrapper {
     display: inline-flex;
     align-items: center;
     gap: 8px;
 }
 
-.prompt-dialog .setting-group-title {
+.setting-group-title {
     user-select: none;
 }
 
-.prompt-dialog .switch-text {
+.switch-text {
     font-size: 14px;
     color: var(--text-color);
     display: block;
     user-select: none;
 }
 
-.prompt-dialog .switch-description {
+.switch-description {
     font-size: small;
     color: var(--text-color);
     display: block;

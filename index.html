@@ -42,7 +42,7 @@
 		</div>
 		<div class="header-right">
 			<button class="icon-button" translate="no" id="playPauseBtn" title="Play / Pause animation (P)" disabled>play_arrow</button>
-			<button class="icon-button" translate="no" id="resetCameraBtn" title="Reset camera (R)">reset_focus</button>
+			<button class="icon-button" translate="no" id="resetCameraBtn" title="Recenter (R)">reset_focus</button>
 			<hr>
 			<div class="dropdown">
 				<button class="icon-button" translate="no" onmousedown="toggleDropdown('more-menu')">more_vert</button>
@@ -66,69 +66,51 @@
 	</header>
 
 	<div id="controls-bar" class="sidebar">
-		<div class="item-group">
-			<div id="vrmaButtons">
-					<div class="item-group-header">
-						<div style="display: flex; align-items: center; gap: 6px;">
-							<span class="icon item-group-icon">directions_walk</span>
-							<strong>Animations</strong>
-						</div>
-						<button class="icon-button" translate="no" id="stopBtn" title="Stop animation" disabled>accessibility</button>
-					</div>
-					<div class="item-group-content collapsed">
-					</div>
+		<details open><summary>Body</summary>
+			<div class="setting top switch-wrapper">
+				<span class="switch-text">Animation</span>
+				<select name="animationSlct" id="AnimationSlct"></select>
+			</div>
+			<div class="setting bottom switch-wrapper">
+				<span class="switch-text">Pose</span>
+				<select name="poseSlct" id="PoseSlct"></select>
+			</div>
+			<div class="setting bottom top switch-wrapper">
+				<span class="switch-text">Reset pose</span>
+				<button class='text-button' id="stopBtn" disabled>Reset</button>
+			</div>
+		</details>
+		<details open><summary>Face</summary>
+			<div class="setting top switch-wrapper">
+				<span class="switch-text">Follow camera</span>
+				<label class="switch">
+					<input type="checkbox" id="look_follow_camera" />
+					<span class="slider"></span>
+				</label>
+			</div>
+			<div class="setting bottom">
+				<div id="look_joystick" class="joystick-container" style="touch-action:none;">
+					<div id="look_joystick_handle" class="joystick-handle"></div>
 				</div>
-		</div>
-		<div class="item-group">
+				<div style="font-size:0.85em;opacity: 0.5;">Drag inside the box to aim eyes.</div>
+			</div>
+			<div class="setting top bottom switch-wrapper">
+				<span class="switch-text">Recenter eyes</span>
+				<button class='text-button' id="resetLookBtn">Recenter</button>
+			</div>
 			<div id="blendShapeRanges">
-				<div class="item-group-header">
-					<div style="display: flex; align-items: center; gap: 6px;">
-						<span class="icon item-group-icon">mood</span>
-						<strong>Expressions</strong>
-					</div>
-					<button class='icon-button' title="Reset expression" id="resetExpressionBtn">refresh</button>
-				</div>
-				<div class="item-group-content collapsed">
-					
-				</div>
+
 			</div>
-		</div>
-		<div class="item-group">
-			<div id="lookControls">
-				<div class="item-group-header">
-					<div style="display: flex; align-items: center; gap: 6px;">
-						<span class="icon item-group-icon">visibility</span>
-						<strong>Look</strong>
-					</div>
-					<button class='icon-button' title="Reset look controls" id="resetLookBtn">refresh</button>
-				</div>
-				<div class="item-group-content collapsed">
-					<div style="display:flex;flex-direction:column;gap:8px;padding:8px;">
-						<label style="display:flex;align-items:center;gap:8px;">
-							<input type="checkbox" id="look_follow_camera" />
-							<span>Follow camera</span>
-						</label>
-						<div id="look_joystick" style="width:140px;height:140px;border:1px solid var(--border-light-color);border-radius:14px;position:relative;touch-action:none;box-shadow: var(--shadow-light);">
-							<div id="look_joystick_handle" style="width:28px;height:28px;border-radius:50%;background:var(--highlight-color);position:absolute;left:56px;top:56px;transform:translate(0,0);box-shadow:var(--shadow-light);"></div>
-						</div>
-						<div style="font-size:0.85em;opacity: 0.5;">Drag inside the box to aim eyes.</div>
-					</div>
-				</div>
+			<div class="setting top bottom switch-wrapper">
+				<span class="switch-text">Clear all expressions</span>
+				<button class='text-button' id="resetExpressionBtn">Reset</button>
 			</div>
-		</div>
-		<div class="item-group">
+		</details>
+		<details open><summary>Materials</summary>
 			<div id="materialsList">
-				<div class="item-group-header">
-					<div style="display: flex; align-items: center; gap: 6px;">
-						<span class="icon item-group-icon">texture</span>
-						<strong>Materials</strong>
-					</div>
-				</div>
-				<div class="item-group-content collapsed">
-					
-				</div>
+				
 			</div>
-		</div>
+		</details>
 	</div>
 
 	<div class="status-bar show" id="status">
@@ -179,8 +161,9 @@
 		const openFileBtn = document.getElementById('openFileBtn');
 		const fileInput = document.getElementById('fileInput');
 		const modelInfoBtn = document.getElementById('modelInfoBtn');
+		const animationSelect = document.getElementById('AnimationSlct');
+		const poseSelect = document.getElementById('PoseSlct');
 
-		attachItemGroupToggles();
 		// #endregion DOM Elements
 
 		// Wire Open model button to hidden file input
@@ -217,8 +200,8 @@
 		const scene = new THREE.Scene();
 		// Use CSS variable `--background-color` for the scene background.
 		// Read from `body` (theme class) first, then fall back to `:root`, then a hard fallback.
-		const bodyBg = getComputedStyle(document.body).getPropertyValue('--background-color').trim();
-		const rootBg = getComputedStyle(document.documentElement).getPropertyValue('--background-color').trim();
+		const bodyBg = getComputedStyle(document.body).getPropertyValue('--background-color-2').trim();
+		const rootBg = getComputedStyle(document.documentElement).getPropertyValue('--background-color-2').trim();
 		const cssBg = bodyBg || rootBg || '#222222';
 		scene.background = new THREE.Color(cssBg);
 		
@@ -476,6 +459,11 @@
 			'Flamboyant'     : './VRMA/VRoid Hub/Flamboyant.vrma',
 			'Gentleman'      : './VRMA/VRoid Hub/Gentleman.vrma',
 			'Powerful'       : './VRMA/VRoid Hub/Powerful.vrma'
+		};
+
+		// Separate dictionary for single-frame poses (kept separate for organization)
+		const VRMA_POSES = {
+			'test': './VRMA_POSES/angry.vrma',
 		};
 		// #endregion File Paths
 
@@ -778,6 +766,10 @@
 			// Enable play/pause and stop buttons only if both VRM and an animation are loaded
 			if (playPauseBtn) playPauseBtn.disabled = !(hasVrm && hasVrma);
 			stopBtn.disabled = !(hasVrm && hasVrma);
+
+			// enable/disable selects
+			if (animationSelect) animationSelect.disabled = !hasVrm;
+			if (poseSelect) poseSelect.disabled = !hasVrm;
 		}
 
 		function updateFavicon() {
@@ -858,6 +850,80 @@
 
 		// Build the buttons now
 		populateVrmaButtons();
+
+		// Populate selects for animations and poses
+		function populateAnimationSelect() {
+			if (!animationSelect) return;
+			animationSelect.innerHTML = '';
+			const keys = Object.keys(VRMA_ANIMATIONS || {});
+			animationSelect.appendChild(document.createElement('option')); // empty option
+			keys.forEach(k => {
+				const opt = document.createElement('option');
+				opt.value = k;
+				opt.textContent = k;
+				animationSelect.appendChild(opt);
+			});
+			animationSelect.disabled = keys.length === 0 || !currentVrm;
+		}
+
+		function populatePoseSelect() {
+			if (!poseSelect) return;
+			poseSelect.innerHTML = '';
+			const keys = Object.keys(VRMA_POSES || {});
+			poseSelect.appendChild(document.createElement('option')); // empty option
+			keys.forEach(k => {
+				const opt = document.createElement('option');
+				opt.value = k;
+				opt.textContent = k;
+				poseSelect.appendChild(opt);
+			});
+			poseSelect.disabled = keys.length === 0 || !currentVrm;
+		}
+
+		// Wire select handlers
+		if (animationSelect) {
+			animationSelect.addEventListener('change', async (e) => {
+				const key = e.target.value;
+				if (!key) return;
+				const url = VRMA_ANIMATIONS[key];
+				if (!url) return;
+				vrmaAnimationClip = undefined;
+				await loadVRMA(url, url.split('/').pop());
+				// auto-play handled by loadVRMA
+				// reset poseSelect to empty
+				if (poseSelect) poseSelect.value = '';
+			});
+		}
+
+		if (poseSelect) {
+			poseSelect.addEventListener('change', async (e) => {
+				const key = e.target.value;
+				if (!key) return;
+				const url = VRMA_POSES[key];
+				if (!url) return;
+				// load pose as a clip and apply single-frame pose
+				try {
+					const clip = await loadVRMA(url, url.split('/').pop());
+					if (!clip || !currentMixer) return;
+					// create an action and step to first frame then pause
+					const action = currentMixer.clipAction(clip);
+					action.reset();
+					action.play();
+					// clamp and pause so pose remains
+					action.clampWhenFinished = true;
+					action.paused = true;
+					try { currentMixer.update(0); } catch (e) { /* ignore */ }
+					// reset animationSelect to empty
+					if (animationSelect) animationSelect.value = '';
+				} catch (err) {
+					console.warn('Failed to apply pose:', err);
+				}
+			});
+		}
+
+		// initial populate
+		populateAnimationSelect();
+		populatePoseSelect();
 
 		// #region Look controls
 		function createLookControls() {
@@ -1049,7 +1115,7 @@
 		if (resetExpressionBtn) { resetExpressionBtn.addEventListener('click', resetExpressionControls); }
 
 		function resetExpressionControls() {
-			const container = document.querySelector('#blendShapeRanges .item-group-content');
+			const container = document.getElementById('blendShapeRanges');
 			if (container) {
 				const inputs = container.querySelectorAll('input[type="range"]');
 				inputs.forEach(input => {
@@ -1244,34 +1310,6 @@
 		// instantiate the ground shadow
 		groundShadow = createGroundShadow(1);
 
-		/**
-		 * Make all `.item-group-header` clickable to toggle their sibling
-		 * `.item-group-content` between `expanded` and `collapsed`.
-		 */
-		function attachItemGroupToggles() {
-			const headers = document.querySelectorAll('.item-group-header');
-			headers.forEach(h => {
-				const group = h.closest('.item-group');
-				if (!group) return;
-				const content = group.querySelector('.item-group-content');
-				if (!content) return;
-				// Ensure keyboard accessibility
-				h.setAttribute('role', 'button');
-				h.tabIndex = 0;
-				h.addEventListener('click', () => {
-					h.classList.toggle('expanded');
-					content.classList.toggle('expanded');
-					content.classList.toggle('collapsed');
-				});
-				h.addEventListener('keydown', (e) => {
-					if (e.key === 'Enter' || e.key === ' ') {
-						e.preventDefault();
-						h.click();
-					}
-				});
-			});
-		}
-
 		// #endregion UI & Events
 
 		// #region Blend Shape Controls
@@ -1347,7 +1385,7 @@
 		 * Build and attach blend shape range controls into the blendShapeRanges content area.
 		 */
 		function populateBlendShapeControls() {
-			const container = document.querySelector('#blendShapeRanges .item-group-content');
+			const container = document.getElementById('blendShapeRanges')
 			if (!container) return;
 			container.innerHTML = '';
 
@@ -1376,17 +1414,26 @@
 
 			// build UI controls in correct order
 			sortBlendShapeNames(Array.from(names)).forEach(name => {
+				const subcontainer = document.createElement('div');
+				subcontainer.className = 'setting switch-wrapper';
+				// add 'top' class to first item
+				if (container.children.length === 0) {
+					subcontainer.classList.add('top');
+				}
+				// add 'bottom' class to last item
+				if (container.children.length === names.size - 1) {
+					subcontainer.classList.add('bottom');
+				}
+
 				const label = document.createElement('span');
 				label.textContent = name;
-				label.style.marginRight = '6px';
+				label.className = 'switch-text';
 
 				const input = document.createElement('input');
-				input.className = 'item';
 				input.type = 'range';
 				input.min = 0;
 				input.max = 100;
 				input.value = 0;
-				input.style.marginRight = '12px';
 
 				input.id = 'blend_' + name.replace(/[^a-z0-9]/gi, '_');
 
@@ -1416,33 +1463,50 @@
 
 				input.value = initVal;
 
-				container.appendChild(label);
-				container.appendChild(input);
+				subcontainer.appendChild(label);
+				subcontainer.appendChild(input);
+				container.appendChild(subcontainer);
 			});
 		}
 		// #endregion Blend Shape Controls
 
 		// #region Materials
-		/**
-		 * Populate the Materials panel with materials used by the current VRM.
-		 * Shows a thumbnail (if texture present), download button and a visibility checkbox.
-		 */
+		
 		function populateMaterials() {
-			const container = document.querySelector('#materialsList .item-group-content');
+			const container = document.getElementById('materialsList');
 			if (!container) return;
+
 			container.innerHTML = '';
 
-			if (!currentVrm) {
+			if (!currentVrm || !currentVrm.scene) {
 				container.textContent = 'Load a VRM to list materials.';
 				return;
 			}
 
-			// Collect unique materials
+			/**
+			 * Map<material.uuid, { material, meshes[] }>
+			 */
 			const materials = new Map();
+
 			currentVrm.scene.traverse((obj) => {
 				if (!obj.isMesh) return;
-				const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-				mats.forEach(m => { if (!m) return; if (!materials.has(m.uuid)) materials.set(m.uuid, m); });
+
+				const mats = Array.isArray(obj.material)
+					? obj.material
+					: [obj.material];
+
+				mats.forEach((mat) => {
+					if (!mat) return;
+
+					if (!materials.has(mat.uuid)) {
+						materials.set(mat.uuid, {
+							material: mat,
+							meshes: []
+						});
+					}
+
+					materials.get(mat.uuid).meshes.push(obj);
+				});
 			});
 
 			if (materials.size === 0) {
@@ -1450,100 +1514,124 @@
 				return;
 			}
 
-			materials.forEach((mat) => {
-				const entry = document.createElement('div');
-				entry.className = 'material-entry';
-				entry.style.display = 'flex';
-				entry.style.alignItems = 'center';
-				entry.style.gap = '8px';
-				entry.style.marginBottom = '8px';
+			let index = 0;
+			const total = materials.size;
 
-				// thumbnail
+			materials.forEach((entry) => {
+				const mat = entry.material;
+				const meshes = entry.meshes;
+
+				const row = document.createElement('div');
+				row.className = 'setting switch-wrapper';
+
+				if (index === 0) row.classList.add('top');
+				if (index === total - 1) row.classList.add('bottom');
+				index++;
+
+				/* Thumbnail */
+
 				const thumb = document.createElement('img');
 				thumb.style.width = '64px';
 				thumb.style.height = '64px';
 				thumb.style.borderRadius = '4px';
 				thumb.style.objectFit = 'cover';
+				thumb.style.cursor = 'pointer';
 				thumb.alt = 'no texture';
-				entry.appendChild(thumb);
-
-				const div = document.createElement('div');
-				entry.appendChild(div);
-
-				const title = document.createElement('div');
-				title.style.fontSize = '0.9em';
-				title.style.display = 'block';
-				title.style.boxSizing = 'border-box';
-				title.style.marginRight = '12px';
-				title.textContent = mat.name || mat.uuid;
-				title.title = mat.name || mat.uuid;
-				div.appendChild(title);
+				thumb.title = mat.name || mat.uuid;
 
 				const mainMap = mat.map || mat.baseMap || null;
+				let fullImageDataURL = null;
+
 				if (mainMap && mainMap.image) {
 					try {
 						const img = mainMap.image;
-						const canvas = document.createElement('canvas');
-						canvas.width = 128; canvas.height = 128;
-						const ctx = canvas.getContext('2d');
-						ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-						thumb.src = canvas.toDataURL('image/png');
-					} catch (e) {
+
+						// Full-size image (for dialog + download)
+						const fullCanvas = document.createElement('canvas');
+						fullCanvas.width = img.width || 1024;
+						fullCanvas.height = img.height || 1024;
+						const fctx = fullCanvas.getContext('2d');
+						fctx.drawImage(img, 0, 0, fullCanvas.width, fullCanvas.height);
+						fullImageDataURL = fullCanvas.toDataURL('image/png');
+
+						// Preview thumbnail
+						const previewCanvas = document.createElement('canvas');
+						previewCanvas.width = 128;
+						previewCanvas.height = 128;
+						const pctx = previewCanvas.getContext('2d');
+						pctx.drawImage(img, 0, 0, 128, 128);
+						thumb.src = previewCanvas.toDataURL('image/png');
+					} catch {
 						thumb.alt = 'preview unavailable';
 					}
-				} else {
-					thumb.alt = 'no texture';
 				}
 
-				// download button (lazy generate data URL)
-				const dl = document.createElement('button');
-				dl.textContent = 'Download';
-				dl.disabled = !(mainMap && mainMap.image);
-				dl.addEventListener('click', () => {
-					if (!(mainMap && mainMap.image)) return;
-					try {
-						const img = mainMap.image;
-						const canvas = document.createElement('canvas');
-						canvas.width = img.width || 1024;
-						canvas.height = img.height || 1024;
-						const ctx = canvas.getContext('2d');
-						ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-						const url = canvas.toDataURL('image/png');
-						const a = document.createElement('a');
-						a.href = url;
-						a.download = (mat.name || mat.uuid) + '.png';
-						a.click();
-					} catch (e) {
-						console.warn('Failed to export texture:', e);
-					}
-				});
-				div.appendChild(dl);
+				/* Click image opens dialog */
 
-				// visibility checkbox
-				const visLabel = document.createElement('label');
-				visLabel.style.display = 'flex';
-				visLabel.style.alignItems = 'center';
+				thumb.addEventListener('click', () => {
+					if (!fullImageDataURL) return;
+
+					const img = document.createElement('img');
+					img.src = fullImageDataURL;
+					img.style.maxWidth = '100%';
+					img.style.maxHeight = '100%';
+					img.style.display = 'block';
+					img.title = mat.name || mat.uuid;
+
+					const safeName = (mat.name || mat.uuid).replace(/"/g, '');
+
+					const toolbarLeft = `
+						<button class="icon-button" title="Download" onclick="
+							const a=document.createElement('a');
+							a.href='${fullImageDataURL}';
+							a.download='${safeName}.png';
+							a.click();
+						">
+							Download
+						</button>
+					`;
+
+					promptMessage(
+						img.outerHTML,
+						true,
+						false,
+						toolbarLeft
+					);
+				});
+
+				row.appendChild(thumb);
+
+				/* Material Name */
+				const label = document.createElement('span');
+				label.className = 'switch-text';
+				label.textContent = mat.name || mat.uuid;
+				row.appendChild(label);
+
+				/* Visibility switch */
+
+				const switchLabel = document.createElement('label');
+				switchLabel.className = 'switch';
+
 				const checkbox = document.createElement('input');
 				checkbox.type = 'checkbox';
-				checkbox.checked = (mat.opacity === undefined) ? true : mat.opacity > 0;
-				checkbox.style.marginRight = '6px';
-				checkbox.addEventListener('change', () => {
-					if (!checkbox.checked) {
-						if (mat.userData.__origOpacity === undefined) mat.userData.__origOpacity = (mat.opacity === undefined) ? 1.0 : mat.opacity;
-						mat.opacity = 0;
-						mat.transparent = true;
-					} else {
-						mat.opacity = (mat.userData.__origOpacity !== undefined) ? mat.userData.__origOpacity : 1.0;
-						mat.transparent = mat.opacity < 1.0;
-					}
-					// ensure renderer updates (materials changed)
-				});
-				visLabel.appendChild(checkbox);
-				const visText = document.createElement('span'); visText.textContent = 'Visible';
-				visLabel.appendChild(visText);
-				div.appendChild(visLabel);
+				checkbox.checked = meshes.some(m => m.visible);
 
-				container.appendChild(entry);
+				checkbox.addEventListener('change', () => {
+					const visible = checkbox.checked;
+					meshes.forEach(mesh => {
+						mesh.visible = visible;
+					});
+				});
+
+				const slider = document.createElement('span');
+				slider.className = 'slider';
+
+				switchLabel.appendChild(checkbox);
+				switchLabel.appendChild(slider);
+
+				row.appendChild(switchLabel);
+
+				container.appendChild(row);
 			});
 		}
 		// #endregion Materials
@@ -1592,10 +1680,26 @@
 				await loadVRM(VRM_MODEL_URL, 'default.vrm');
 			}
 			await loadVRMA(VRMA_ANIMATIONS['Standard'], 'Standard.vrma');
+			if (animationSelect) animationSelect.value = 'Standard';
 			updateButtons(); // Update button states after VRM is loaded
 			if (!isMobile()) document.getElementById('controls-bar').classList.add('show');
 		});
 		// #endregion Initial Load
+
+		// const SPRING_JUMP_FORCE = 0.01;
+
+		// window.addEventListener('pointerdown', () => {
+		// 	if (!currentVrm?.springBoneManager?._joints) return;
+
+		// 	for (const joint of currentVrm.springBoneManager._joints) {
+		// 		if (!joint._prevTail) continue;
+
+		// 		joint._prevTail.y -= SPRING_JUMP_FORCE;
+		// 	}
+
+		// 	console.log('Spring jump applied');
+		// });
+
 	</script>
 
 	<script>

@@ -11,6 +11,7 @@ body {
     background-color: var(--background-color);
     margin: 0px;
     font-family: "ubuntu", sans-serif;
+    color: var(--text-color);
 }
 
 header.window-title {
@@ -423,13 +424,35 @@ button.danger:hover {
     resize: horizontal;
 
     height: calc(100vh - 48px - 10px);
-    background-color: var(--background-color-2);
+    background-color: var(--background-color);
     position: absolute;
     z-index: 998;
     padding: 5px;
     border-right: 1px solid var(--border-dark-color);
     transform: translateX(-100%);
-    width: 300px;
+    width: 400px;
+}
+
+.sidebar details summary {
+    font-size: 1em;
+    font-weight: bold;
+    padding: 10px 0px;
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 12px;
+    color: var(--title-color);
+}
+
+.sidebar details summary::before {
+    font-family: var(--font-icon);
+    content: "chevron_right";
+    float: right;
+    font-size: 20px;
+}
+
+.sidebar details:open summary::before {
+    content: "expand_more";
 }
 
 .sidebar.show {
@@ -550,12 +573,6 @@ button.danger:hover {
     display: flex;
     align-items: center;
     gap: 3px;
-}
-
-.sidebar input[type="range"].item {
-    width: 100%;
-    display: block;
-    box-sizing: border-box;
 }
 
 .sidebar .item p {
