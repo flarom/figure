@@ -46,6 +46,12 @@ header.window-title {
     padding-right: 420px;
 }
 
+@media screen and (max-width: 800px) {
+    .sidebar.show ~ .main-wrapper header.window-title {
+        display: none;
+    }
+}
+
 header.window-title.bottom {
     border-bottom: 1px solid var(--border-dark-color);
 }
@@ -217,7 +223,7 @@ button.danger:hover {
     }
 }
 
-@media screen and (min-width: 501px) {
+@media screen and (min-width: 800px) {
     .hide-on-pc {
         display: none !important;
     }
@@ -450,6 +456,10 @@ button.danger:hover {
 
 .sidebar header.window-title {
     background-color: transparent;
+}
+
+.sidebar details {
+    user-select: none;
 }
 
 .sidebar details summary {
@@ -723,7 +733,8 @@ button.danger:hover {
     height: calc(100% - 49px - 48px);
 	overflow-y: auto;
     overflow-x: hidden;
-    padding: 5px;
+    margin: 5px;
+    border-radius: 15px;
 }
 
 .tab.active {
@@ -807,4 +818,21 @@ button.danger:hover {
 
 .tab-button.active .tab-label {
 	height: 2ch;
+}
+
+.skybox-button {
+    width: 64px;
+    height: 64px;
+    border-radius: 32px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--border-light-color);
+    box-shadow: var(--shadow-light);
+    cursor: pointer;
+}
+
+.skybox-button img {
+    width: 64px;
+    height: 64px;
+    border-radius: 32px;
 }

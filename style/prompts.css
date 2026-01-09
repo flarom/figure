@@ -262,6 +262,17 @@ input[type="range"]::-moz-range-progress {
     background: var(--highlight-color);
 }
 
+input[type="color"] {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    padding: 0;
+    border: 1px solid var(--border-field-color);
+    cursor: pointer;
+    box-shadow: var(--shadow-light);
+    outline: none;
+}
+
 .prompt-buttons {
     display: flex;
     gap: 10px;
@@ -536,7 +547,7 @@ input:checked + .slider:before {
 
 .switch-text {
     font-size: 14px;
-    color: var(--text-color);
+    color: var(--title-color);
     display: block;
     user-select: none;
 }

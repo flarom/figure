@@ -33,7 +33,7 @@
 	<div id="controls-bar" class="sidebar">
 		<header class="window-title">
 			<div class="header-left">
-				<button id="openFileBtn" class="icon-button hide-on-mobile" translate="no" title="Open model">open_in_browser</button>
+				<button id="openFileBtn" class="icon-button hide-on-tablet" translate="no" title="Open model">open_in_browser</button>
 				<button class="icon-button hide-on-pc" onmousedown="toggleSidebar('controls-bar')">arrow_back</button>
 			</div>
 			<div class="header-center">
@@ -112,7 +112,54 @@
 			</details>
 		</div>
 		<div class="tab" id="tab-scene">
+			<details open><summary>Light</summary>
+				<div class="setting top switch-wrapper">
+					<span class="switch-text">Position X</span>
+					<input type="range" id="light-pos-x" min="-5" max="5" step="0.5" value="0.5">
+				</div>
+				<div class="setting switch-wrapper">
+					<span class="switch-text">Position Y</span>
+					<input type="range" id="light-pos-y" min="0" max="5" step="0.5" value="1.0">
+				</div>
+				<div class="setting bottom switch-wrapper">
+					<span class="switch-text">Position Z</span>
+					<input type="range" id="light-pos-z" min="-5" max="5" step="0.5" value="1.0">
+				</div>
+				<div class="setting top switch-wrapper">
+					<span class="switch-text">Brightness</span>
+					<input type="range" id="light-intensity" min="0" max="6" step="0.5" value="3">
+				</div>
+				<div class="setting bottom switch-wrapper">
+					<span class="switch-text">Color</span>
+					<input type="color" id="light-color" value="#ffffff">
+				</div>
+				<div class="setting bottom top switch-wrapper">
+					<span class="switch-text">Reset light</span>
+					<button class='text-button' id="resetLightBtn">Reset</button>
+				</div>
+			</details>
+			<details open><summary>Background</summary>
+				<div class="setting bottom top switch-wrapper">
+					<span class="switch-text">Color</span>
+					<input type="color" id="background-color" value="#222222">
+				</div>
+				<div class="setting top">
+					<div id="skyboxButtons">
 
+					</div>
+				</div>
+				<div class="setting switch-wrapper">
+					<span class="switch-text">Image</span>
+					<button class='text-button' id="setBackgroundImageBtn">Set Image</button>
+				</div>
+				<div class="setting bottom switch-wrapper">
+					<div>
+						<span class="switch-text">Light as background average color</span>
+						<span class="switch-description">Sets the scene light color as an average taken from the background image.</span>
+					</div>
+					<button class='text-button' id="setLightAsBgAvgBtn">Set Light Color</button>
+				</div>
+			</details>
 		</div>
 		<div class="tab-control">
 			<button class="tab-button" id="tab-btn-tab-model">
@@ -151,6 +198,7 @@
 
 	<!-- hidden file input for Open model button -->
 	<input type="file" id="fileInput" accept=".vrm,.vrma" style="display:none" />
+	<input type="file" id="backgroundImageFileInput" accept="image/*" style="display:none" />
 
 	<script src="script/settings.js"></script>
 	<script src="script/prompts.js"></script>
@@ -176,19 +224,123 @@
 
 		// #region DOM Elements
 		// DOM elements
-		const vrmaButtonsContainer = document.querySelector('#vrmaButtons .item-group-content');
+		const mainWrapper = document.getElementById('mainWrapper');
+
 		const playPauseBtn = document.getElementById('playPauseBtn');
 		const stopBtn = document.getElementById('stopBtn');
+
 		const statusDiv = document.getElementById('status');
-		const mainWrapper = document.getElementById('mainWrapper');
 		const vrmModelName = document.getElementById('vrm-model-name');
 		const vrmAuthorName = document.getElementById('vrm-author-name');
+
 		const openFileBtn = document.getElementById('openFileBtn');
 		const openFileBtn2 = document.getElementById('openFileBtn2');
 		const fileInput = document.getElementById('fileInput');
 		const modelInfoBtn = document.getElementById('modelInfoBtn');
+
+		// animation & pose selects
 		const animationSelect = document.getElementById('AnimationSlct');
 		const poseSelect = document.getElementById('PoseSlct');
+
+		// light
+		const lightPosXInput = document.getElementById('light-pos-x');
+		const lightPosYInput = document.getElementById('light-pos-y');
+		const lightPosZInput = document.getElementById('light-pos-z');
+		const lightIntensityInput = document.getElementById('light-intensity');
+		const lightColorInput = document.getElementById('light-color');
+		const resetLightBtn = document.getElementById('resetLightBtn');
+		const setLightAsBgAvgBtn = document.getElementById('setLightAsBgAvgBtn');
+
+		// background
+		const backgroundColorInput = document.getElementById('background-color');
+		const setBackgroundImageBtn = document.getElementById('setBackgroundImageBtn');
+		const backgroundImageFileInput = document.getElementById('backgroundImageFileInput');
+
+		// sliders events
+		lightPosXInput.addEventListener('input', (e) => {
+			if (light) light.position.x = parseFloat(e.target.value);
+		});
+		lightPosYInput.addEventListener('input', (e) => {
+			if (light) light.position.y = parseFloat(e.target.value);
+		});
+		lightPosZInput.addEventListener('input', (e) => {
+			if (light) light.position.z = parseFloat(e.target.value);
+		});
+		lightIntensityInput.addEventListener('input', (e) => {
+			if (light) light.intensity = parseFloat(e.target.value);
+		});
+		lightColorInput.addEventListener('input', (e) => {
+			if (light) light.color = new THREE.Color(e.target.value);
+		});
+		resetLightBtn.addEventListener('click', (e) => {
+			// reset light to default values
+			if (light) {
+				light.position.set(0.5, 1.0, 1.0);
+				light.intensity = 3.0;
+				light.color = new THREE.Color('#ffffff');
+			}
+			// update inputs
+			lightPosXInput.value = '0.5';
+			lightPosYInput.value = '1.0';
+			lightPosZInput.value = '1.0';
+			lightIntensityInput.value = '3';
+			lightColorInput.value = '#ffffff';
+		});
+		setLightAsBgAvgBtn.addEventListener('click', (e) => {
+			e.preventDefault();
+			if (scene && light) {
+				const bg = scene.background;
+				if (bg && bg.isTexture) {
+					// get average color from texture
+					const canvas = document.createElement('canvas');
+					const context = canvas.getContext('2d');
+					const img = bg.image;
+					canvas.width = img.width;
+					canvas.height = img.height;
+					context.drawImage(img, 0, 0);
+					const imgData = context.getImageData(0, 0, canvas.width, canvas.height);
+					let r = 0, g = 0, b = 0;
+					const pixelCount = imgData.width * imgData.height;
+					for (let i = 0; i < imgData.data.length; i += 4) {
+						r += imgData.data[i];
+						g += imgData.data[i + 1];
+						b += imgData.data[i + 2];
+					}
+					r = Math.floor(r / pixelCount);
+					g = Math.floor(g / pixelCount);
+					b = Math.floor(b / pixelCount);
+					const avgColor = new THREE.Color(`rgb(${r}, ${g}, ${b})`);
+					light.color = avgColor;
+					lightColorInput.value = '#' + avgColor.getHexString();
+				} else if (bg && bg.isColor) {
+					light.color = bg.clone();
+					lightColorInput.value = '#' + bg.getHexString();
+				}
+			}
+		});
+		backgroundColorInput.addEventListener('input', (e) => {
+			if (scene) scene.background = new THREE.Color(e.target.value);
+		});
+		setBackgroundImageBtn.addEventListener('click', (e) => {
+			e.preventDefault();
+			backgroundImageFileInput.click();
+		});
+		backgroundImageFileInput.addEventListener('change', async (ev) => {
+			const f = ev.target.files && ev.target.files[0];
+			if (f) {
+				const url = URL.createObjectURL(f);
+				const loader = new THREE.TextureLoader();
+				loader.load(url, (texture) => {
+					texture.colorSpace = THREE.SRGBColorSpace;
+					texture.flipY = true;
+
+					if (scene) scene.background = texture;
+
+					URL.revokeObjectURL(url);
+				});
+			}
+			backgroundImageFileInput.value = ''; // reset
+		});
 
 		// #endregion DOM Elements
 
@@ -241,6 +393,8 @@
 		const rootBg = getComputedStyle(document.documentElement).getPropertyValue('--background-color-2').trim();
 		const cssBg = bodyBg || rootBg || '#222222';
 		scene.background = new THREE.Color(cssBg);
+		// update background when theme changes
+		if (backgroundColorInput) backgroundColorInput.value = '#' + scene.background.getHexString();
 		
 		// Expose scene to non-module scripts for compatibility / debugging.
 		window.scene = scene;
@@ -502,6 +656,11 @@
 		const VRMA_POSES = {
 			'test': './VRMA_POSES/angry.vrma',
 		};
+
+		const SKYBOXES = {
+			'Sky' : './skybox/sky.png',
+			'Night' : './skybox/night.png',
+		};
 		// #endregion File Paths
 
 		// #region File Loading
@@ -630,6 +789,8 @@
 
 							// Populate materials list
 							try { populateMaterials(); } catch (e) { console.warn('populateMaterials failed:', e); }
+
+							try { populateSkyboxButtons(); } catch (e) { console.warn('populateSkyboxButtons failed:', e); }
 
 							// Save last VRM reference to localStorage (attempt to persist)
 							try { saveLastVrm(fileObject, url, displayName || (url && url.split('/').pop())); } catch (e) { console.warn(e); }
@@ -1294,6 +1455,10 @@
 			if (!dt) return;
 			const file = dt.files && dt.files[0];
 			await handleFileDrop(file);
+			const bodyBg = getComputedStyle(document.body).getPropertyValue('--background-color-2').trim();
+			const rootBg = getComputedStyle(document.documentElement).getPropertyValue('--background-color-2').trim();
+			const cssBg = bodyBg || rootBg || '#222222';
+			scene.background = new THREE.Color(cssBg);
 		});
 
 		document.body.addEventListener('keydown', async (e) => {
@@ -1678,6 +1843,57 @@
 		}
 
 		// #endregion Materials
+
+		// #region skybox
+		function applySkyboxFromURL(url) {
+			const loader = new THREE.TextureLoader();
+
+			loader.load(url, (texture) => {
+				texture.colorSpace = THREE.SRGBColorSpace;
+				texture.flipY = true;
+				texture.mapping = THREE.EquirectangularReflectionMapping;
+
+				scene.background = texture;
+				scene.environment = texture;
+			}, undefined, (err) => {
+				console.error('Failed to load skybox:', err);
+				showToast('Failed to load skybox.', 'error');
+			});
+		}
+		function populateSkyboxButtons() {
+			const container = document.getElementById('skyboxButtons');
+			if (!container) return;
+
+			container.innerHTML = '';
+
+			const entries = Object.entries(SKYBOXES || {});
+
+			entries.forEach(([name, url]) => {
+				const btn = document.createElement('button');
+				btn.className = 'skybox-button';
+				btn.type = 'button';
+				btn.title = name;
+
+				const img = document.createElement('img');
+				img.src = url;
+				img.alt = name;
+				img.loading = 'lazy';
+
+				btn.appendChild(img);
+
+				btn.addEventListener('click', () => {
+					applySkyboxFromURL(url);
+
+					// visual selection state
+					container.querySelectorAll('.skybox-button')
+						.forEach(b => b.classList.remove('active'));
+					btn.classList.add('active');
+				});
+
+				container.appendChild(btn);
+			});
+		}
+		// #endregion skybox
 
 		// #region Animation Loop
 		// --- Animation Loop ---
