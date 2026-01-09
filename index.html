@@ -30,87 +30,100 @@
 </head>
 
 <body class="theme-light">
-	<header class="window-title bottom">
-		<div class="header-left">
-			<button class="icon-button" translate="no" onmousedown="toggleSidebar('controls-bar')"
-				title="Toggle sidebar">side_navigation</button>
-			<button id="openFileBtn" class="icon-button" translate="no" title="Open model">folder_open</button>
-		</div>
-		<div class="header-center hide-on-mobile">
-			<div id="vrm-model-name">Figure</div>
-			<span id="vrm-author-name">Currently loading</span>
-		</div>
-		<div class="header-right">
-			<button class="icon-button" translate="no" id="playPauseBtn" title="Play / Pause animation (P)" disabled>play_arrow</button>
-			<button class="icon-button" translate="no" id="resetCameraBtn" title="Recenter (R)">reset_focus</button>
-			<hr>
-			<div class="dropdown">
-				<button class="icon-button" translate="no" onmousedown="toggleDropdown('more-menu')">more_vert</button>
-				<div class="dropdown-content menu" id="more-menu">
-					<button class="text-button" id="modelInfoBtn">
-						<span>Model information</span>
-					</button>
-					<hr>
-					<button class="text-button" onmouseup="showMessageFromFile('dialog/settings.html', true, false, true, true, 600); hideAllMenus()">
-						<span>Settings</span>
-						<kbd>Ctrl+,</kbd>
-					</button>
-					<hr>
-					<button class="text-button" onmouseup="showMessageFromFile('dialog/about.html'); hideAllMenus()">
-						<span>About Figure</span>
-						<kbd>F1</kbd>
-					</button>
-				</div>
-			</div>
-		</div>
-	</header>
-
 	<div id="controls-bar" class="sidebar">
-		<details open><summary>Body</summary>
-			<div class="setting top switch-wrapper">
-				<span class="switch-text">Animation</span>
-				<select name="animationSlct" id="AnimationSlct"></select>
+		<header class="window-title">
+			<div class="header-left">
+				<button id="openFileBtn" class="icon-button hide-on-mobile" translate="no" title="Open model">open_in_browser</button>
+				<button class="icon-button hide-on-pc" onmousedown="toggleSidebar('controls-bar')">arrow_back</button>
 			</div>
-			<div class="setting bottom switch-wrapper">
-				<span class="switch-text">Pose</span>
-				<select name="poseSlct" id="PoseSlct"></select>
+			<div class="header-center">
+				<div id="vrm-model-name">Figure</div>
+				<span id="vrm-author-name"></span>
 			</div>
-			<div class="setting bottom top switch-wrapper">
-				<span class="switch-text">Reset pose</span>
-				<button class='text-button' id="stopBtn" disabled>Reset</button>
-			</div>
-		</details>
-		<details open><summary>Face</summary>
-			<div class="setting top switch-wrapper">
-				<span class="switch-text">Follow camera</span>
-				<label class="switch">
-					<input type="checkbox" id="look_follow_camera" />
-					<span class="slider"></span>
-				</label>
-			</div>
-			<div class="setting bottom">
-				<div id="look_joystick" class="joystick-container" style="touch-action:none;">
-					<div id="look_joystick_handle" class="joystick-handle"></div>
+			<div class="header-right">
+				<div class="dropdown">
+					<button class="icon-button" translate="no" onmousedown="toggleDropdown('more-menu')">more_vert</button>
+					<div class="dropdown-content menu" id="more-menu">
+						<button class="text-button" id="openFileBtn2">
+							<span>Open model</span>
+						</button>
+						<button class="text-button" id="modelInfoBtn">
+							<span>Model information</span>
+						</button>
+						<hr>
+						<button class="text-button" onmouseup="showMessageFromFile('dialog/settings.html', true, false, true, true, 600); hideAllMenus()">
+							<span>Settings</span>
+							<kbd>Ctrl+,</kbd>
+						</button>
+						<hr>
+						<button class="text-button" onmouseup="showMessageFromFile('dialog/about.html'); hideAllMenus()">
+							<span>About Figure</span>
+							<kbd>F1</kbd>
+						</button>
+					</div>
 				</div>
-				<div style="font-size:0.85em;opacity: 0.5;">Drag inside the box to aim eyes.</div>
 			</div>
-			<div class="setting top bottom switch-wrapper">
-				<span class="switch-text">Recenter eyes</span>
-				<button class='text-button' id="resetLookBtn">Recenter</button>
-			</div>
-			<div id="blendShapeRanges">
+		</header>
+		<div class="tab" id="tab-model">
+			<details open><summary>Body</summary>
+				<div class="setting top switch-wrapper">
+					<span class="switch-text">Animation</span>
+					<select name="animationSlct" id="AnimationSlct"></select>
+				</div>
+				<div class="setting bottom switch-wrapper">
+					<span class="switch-text">Pose</span>
+					<select name="poseSlct" id="PoseSlct"></select>
+				</div>
+				<div class="setting bottom top switch-wrapper">
+					<span class="switch-text">Reset pose</span>
+					<button class='text-button' id="stopBtn" disabled>Reset</button>
+				</div>
+			</details>
+			<details open><summary>Face</summary>
+				<div class="setting top switch-wrapper">
+					<span class="switch-text">Look at camera</span>
+					<label class="switch">
+						<input type="checkbox" id="look_follow_camera" />
+						<span class="slider"></span>
+					</label>
+				</div>
+				<div class="setting bottom">
+					<div id="look_joystick" class="joystick-container" style="touch-action:none;">
+						<div id="look_joystick_handle" class="joystick-handle"></div>
+					</div>
+					<div style="font-size:0.85em;opacity: 0.5;">Drag inside the box to aim eyes.</div>
+				</div>
+				<div class="setting top bottom switch-wrapper">
+					<span class="switch-text">Recenter eyes</span>
+					<button class='text-button' id="resetLookBtn">Recenter</button>
+				</div>
+				<div id="blendShapeRanges">
 
-			</div>
-			<div class="setting top bottom switch-wrapper">
-				<span class="switch-text">Clear all expressions</span>
-				<button class='text-button' id="resetExpressionBtn">Reset</button>
-			</div>
-		</details>
-		<details open><summary>Materials</summary>
-			<div id="materialsList">
-				
-			</div>
-		</details>
+				</div>
+				<div class="setting top bottom switch-wrapper">
+					<span class="switch-text">Clear all expressions</span>
+					<button class='text-button' id="resetExpressionBtn">Reset</button>
+				</div>
+			</details>
+			<details open><summary>Materials</summary>
+				<div id="materialsList">
+					
+				</div>
+			</details>
+		</div>
+		<div class="tab" id="tab-scene">
+
+		</div>
+		<div class="tab-control">
+			<button class="tab-button" id="tab-btn-tab-model">
+				<span class="tab-icon">accessibility</span>
+				<span class="tab-label">Model</span>
+			</button>
+			<button class="tab-button" id="tab-btn-tab-scene">
+				<span class="tab-icon">landscape</span>
+				<span class="tab-label">Scene</span>
+			</button>
+		</div>
 	</div>
 
 	<div class="status-bar show" id="status">
@@ -121,7 +134,19 @@
 	</div>
 
 	<div class="main-wrapper" id="mainWrapper" onclick="hideAllMenus();">
-
+		<header class="window-title">
+		<div class="header-left">
+			<button class="icon-button" translate="no" onmousedown="toggleSidebar('controls-bar')"
+				title="Toggle sidebar">side_navigation</button>
+		</div>
+		<div class="header-center">
+			
+		</div>
+		<div class="header-right">
+			<button class="icon-button" translate="no" id="playPauseBtn" title="Play / Pause animation (P)" disabled>play_arrow</button>
+			<button class="icon-button" translate="no" id="resetCameraBtn" title="Recenter (R)">reset_focus</button>
+		</div>
+	</header>
 	</div>
 
 	<!-- hidden file input for Open model button -->
@@ -159,6 +184,7 @@
 		const vrmModelName = document.getElementById('vrm-model-name');
 		const vrmAuthorName = document.getElementById('vrm-author-name');
 		const openFileBtn = document.getElementById('openFileBtn');
+		const openFileBtn2 = document.getElementById('openFileBtn2');
 		const fileInput = document.getElementById('fileInput');
 		const modelInfoBtn = document.getElementById('modelInfoBtn');
 		const animationSelect = document.getElementById('AnimationSlct');
@@ -178,6 +204,17 @@
 				fileInput.value = ''; // reset
 			});
 		}
+		if (openFileBtn2 && fileInput) {
+			openFileBtn2.addEventListener('click', (e) => {
+				e.preventDefault();
+				fileInput.click();
+			});
+			fileInput.addEventListener('change', async (ev) => {
+				const f = ev.target.files && ev.target.files[0];
+				if (f) await handleFileDrop(f);
+				fileInput.value = ''; // reset
+			});
+		}
 
 		// #region Three.js Setup
 		// --- Three.js Setup ---
@@ -188,8 +225,8 @@
 		mainWrapper.appendChild(renderer.domElement);
 
 		const camera = new THREE.PerspectiveCamera(30.0, window.innerWidth / window.innerHeight, 0.1, 20.0);
-		camera.position.set(0.0, 1.0, 5.0);
-		const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0.0, 1.0, 5.0);
+		camera.position.set(0.0, 0.75, 4.0);
+		const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0.0, 0.75, 4.0);
 		const DEFAULT_CONTROLS_TARGET = new THREE.Vector3(0.0, 1.0, 0.0);
 
 		const controls = new OrbitControls(camera, renderer.domElement);
@@ -212,7 +249,7 @@
 		light.position.set(0.5, 1.0, 1.0).normalize();
 		scene.add(light);
 
-		const ambientLight = new THREE.AmbientLight(0xffffff, 1.0); // Brighter ambient light
+		const ambientLight = new THREE.AmbientLight(0xffffff, 0); // ambient light
 		scene.add(ambientLight);
 
 		// --- Global Variables for VRM and Animation ---
@@ -1237,6 +1274,18 @@
 		mainWrapper.addEventListener('dragover', (e) => {
 			e.preventDefault();
 			e.dataTransfer.dropEffect = 'copy';
+			const bodyBg = getComputedStyle(document.body).getPropertyValue('--color-blue-bg').trim();
+			const rootBg = getComputedStyle(document.documentElement).getPropertyValue('--color-blue-bg').trim();
+			const cssBg = bodyBg || rootBg || '#222222';
+			scene.background = new THREE.Color(cssBg);
+		});
+
+		mainWrapper.addEventListener('dragleave', (e) => {
+			e.preventDefault();
+			const bodyBg = getComputedStyle(document.body).getPropertyValue('--background-color-2').trim();
+			const rootBg = getComputedStyle(document.documentElement).getPropertyValue('--background-color-2').trim();
+			const cssBg = bodyBg || rootBg || '#222222';
+			scene.background = new THREE.Color(cssBg);
 		});
 
 		mainWrapper.addEventListener('drop', async (e) => {
@@ -1483,9 +1532,11 @@
 				return;
 			}
 
-			/**
-			 * Map<material.uuid, { material, meshes[] }>
-			 */
+			function isOutlineMaterial(mat) {
+				if (!mat || !mat.name) return false;
+				return /\(outline\)\s*$/i.test(mat.name);
+			}
+
 			const materials = new Map();
 
 			currentVrm.scene.traverse((obj) => {
@@ -1497,6 +1548,9 @@
 
 				mats.forEach((mat) => {
 					if (!mat) return;
+
+					// ignore outline materials
+					if (isOutlineMaterial(mat)) return;
 
 					if (!materials.has(mat.uuid)) {
 						materials.set(mat.uuid, {
@@ -1529,7 +1583,6 @@
 				index++;
 
 				/* Thumbnail */
-
 				const thumb = document.createElement('img');
 				thumb.style.width = '64px';
 				thumb.style.height = '64px';
@@ -1546,7 +1599,6 @@
 					try {
 						const img = mainMap.image;
 
-						// Full-size image (for dialog + download)
 						const fullCanvas = document.createElement('canvas');
 						fullCanvas.width = img.width || 1024;
 						fullCanvas.height = img.height || 1024;
@@ -1554,7 +1606,6 @@
 						fctx.drawImage(img, 0, 0, fullCanvas.width, fullCanvas.height);
 						fullImageDataURL = fullCanvas.toDataURL('image/png');
 
-						// Preview thumbnail
 						const previewCanvas = document.createElement('canvas');
 						previewCanvas.width = 128;
 						previewCanvas.height = 128;
@@ -1565,8 +1616,6 @@
 						thumb.alt = 'preview unavailable';
 					}
 				}
-
-				/* Click image opens dialog */
 
 				thumb.addEventListener('click', () => {
 					if (!fullImageDataURL) return;
@@ -1591,12 +1640,7 @@
 						</button>
 					`;
 
-					promptMessage(
-						img.outerHTML,
-						true,
-						false,
-						toolbarLeft
-					);
+					promptMessage(img.outerHTML, true, false, toolbarLeft);
 				});
 
 				row.appendChild(thumb);
@@ -1608,7 +1652,6 @@
 				row.appendChild(label);
 
 				/* Visibility switch */
-
 				const switchLabel = document.createElement('label');
 				switchLabel.className = 'switch';
 
@@ -1628,12 +1671,12 @@
 
 				switchLabel.appendChild(checkbox);
 				switchLabel.appendChild(slider);
-
 				row.appendChild(switchLabel);
 
 				container.appendChild(row);
 			});
 		}
+
 		// #endregion Materials
 
 		// #region Animation Loop

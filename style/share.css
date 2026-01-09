@@ -8,10 +8,16 @@
 }
 
 body {
-    background-color: var(--background-color);
+    background-color: var(--background-color-2);
     margin: 0px;
     font-family: "ubuntu", sans-serif;
     color: var(--text-color);
+}
+
+canvas {
+  display: block;
+  width: 100vw !important;
+  height: 100vh !important;
 }
 
 header.window-title {
@@ -24,6 +30,20 @@ header.window-title {
     color: var(--title-color);
     height: 48px;
     z-index: 999;
+}
+
+.main-wrapper header.window-title {
+    background-color: transparent;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    transition: margin-left 0.3s ease, padding-right 0.3s ease;
+}
+
+.sidebar.show ~ .main-wrapper header.window-title {
+    margin-left: 400px;
+    padding-right: 420px;
 }
 
 header.window-title.bottom {
@@ -340,13 +360,13 @@ button.danger:hover {
 
 .main-wrapper {
     position: relative;
-    height: calc(100vh - 48px);
+    height: 100vh;
     transition: margin-left 0.3s ease;
     overflow: hidden;
 }
 
 .status-bar.show ~ .main-wrapper {
-    height: calc(100vh - 48px - 30px);
+    height: calc(100vh - 30px);
 }
 
 .status-bar.show ~ .sidebar {
@@ -417,20 +437,19 @@ button.danger:hover {
 .sidebar {
     transition: transform 0.3s ease;
     overflow: hidden;
-    flex-shrink: 0;
     display: block;
 
-    overflow-y: scroll;
-    resize: horizontal;
-
-    height: calc(100vh - 48px - 10px);
+    height: 100vh;
     background-color: var(--background-color);
     position: absolute;
     z-index: 998;
-    padding: 5px;
     border-right: 1px solid var(--border-dark-color);
     transform: translateX(-100%);
     width: 400px;
+}
+
+.sidebar header.window-title {
+    background-color: transparent;
 }
 
 .sidebar details summary {
@@ -461,7 +480,8 @@ button.danger:hover {
 
 @media screen and (max-width: 800px) {
     .sidebar.show {
-        width: calc(100vw - 10px);
+        width: 100vw;
+        overflow: hidden;
         border-right: none;
     }
 }
@@ -694,4 +714,97 @@ button.danger:hover {
     to {
         height: 240px;
     }
+}
+
+/* Tabs layout */
+
+.tab {
+	display: none;
+    height: calc(100% - 49px - 48px);
+	overflow-y: auto;
+    overflow-x: hidden;
+    padding: 5px;
+}
+
+.tab.active {
+	display: block;
+}
+
+/* Bottom tab bar */
+
+.tab-control {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 48px;
+
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+
+	background: var(--background-color-2);
+	border-top: 1px solid var(--border-dark-color);
+	backdrop-filter: blur(8px);
+	z-index: 100;
+}
+
+/* Tab buttons */
+
+.tab-button {
+	flex: 1;
+	/* height: 100%; */
+
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 4px;
+
+	background: none;
+	border: none;
+	color: var(--color-text);
+	cursor: pointer;
+
+    margin: 4px;
+    border-radius: 8px;
+
+	font-family: inherit;
+	transition: color 0.2s ease;
+    opacity: 0.75;
+}
+
+.tab-button:active {
+	filter: brightness(1.1);
+}
+
+/* Icon */
+
+.tab-icon {
+	font-family: var(--font-icon);
+	font-size: 24px;
+	line-height: 1;
+	pointer-events: none;
+}
+
+/* Label */
+
+.tab-label {
+	font-size: 11px;
+	pointer-events: none;
+    height: 0ch;
+    transition: height 0.2s ease;
+    overflow: hidden;
+}
+
+/* Active state */
+
+.tab-button.active {
+	color: var(--title-color);
+    opacity: 1;
+    background-color: var(--background-color-3);
+}
+
+.tab-button.active .tab-label {
+	height: 2ch;
 }

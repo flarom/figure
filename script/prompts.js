@@ -63,6 +63,37 @@ function handleActivation(e) {
     }
 }
 
+(function () {
+	const tabs = document.querySelectorAll(".tab");
+	const buttons = document.querySelectorAll(".tab-button");
+
+	function activateTab(tabId) {
+		// Tabs
+		tabs.forEach(tab => {
+			tab.classList.toggle("active", tab.id === tabId);
+		});
+
+		// Buttons
+		buttons.forEach(btn => {
+			btn.classList.toggle(
+				"active",
+				btn.id === "tab-btn-" + tabId
+			);
+		});
+	}
+
+	// Bind clicks
+	buttons.forEach(btn => {
+		btn.addEventListener("click", () => {
+			const tabId = btn.id.replace("tab-btn-", "");
+			activateTab(tabId);
+		});
+	});
+
+	// Default tab
+	activateTab("tab-model");
+})();
+
 function toggleSidebar(sidebarId) {
     const sidebar = document.getElementById(sidebarId);
 
