@@ -555,6 +555,7 @@ input:checked + .slider:before {
 .switch-description {
     font-size: small;
     color: var(--text-color);
+    opacity: .75;
     display: block;
     user-select: none;
 }

@@ -119,7 +119,11 @@ function toggleSidebar(sidebarId) {
     localStorage.setItem(`last${sidebarId}SidebarState`, sidebar.classList.contains("show"));
 }
 
-function showToast(message, icon = "") {
+function showToast(message, icon = "", removePrevious = false) {
+    if (removePrevious) {
+        document.querySelectorAll(".toast").forEach((el) => el.remove());
+    }
+
     const snackbar = document.createElement("div");
     snackbar.className = "toast show";
     snackbar.innerHTML = `<span class='icon' style='font-size:x-large'>${icon}</span><p>${message}</p>`;

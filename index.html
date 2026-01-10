@@ -112,6 +112,12 @@
 			</details>
 		</div>
 		<div class="tab" id="tab-scene">
+			<details open><summary>Camera</summary>
+				<div class="setting top bottom switch-wrapper">
+					<span class="switch-text">Field of view</span>
+					<input type="range" id="fovRange" min="5" max="120" step="5" value="30">
+				</div>
+			</details>
 			<details open><summary>Light</summary>
 				<div class="setting top switch-wrapper">
 					<span class="switch-text">Position X</span>
@@ -148,7 +154,11 @@
 
 					</div>
 				</div>
-				<div class="setting switch-wrapper">
+				<div class="setting bottom switch-wrapper">
+					<span class="switch-text">Skybox position</span>
+					<input type="range" id="skyboxRotationRange" min="0" max="360" step="1" value="180">
+				</div>
+				<div class="setting top switch-wrapper">
 					<span class="switch-text">Image</span>
 					<button class='text-button' id="setBackgroundImageBtn">Set Image</button>
 				</div>
@@ -157,9 +167,22 @@
 						<span class="switch-text">Light as background average color</span>
 						<span class="switch-description">Sets the scene light color as an average taken from the background image.</span>
 					</div>
-					<button class='text-button' id="setLightAsBgAvgBtn">Set Light Color</button>
+					<button class='text-button' id="setLightAsBgAvgBtn">Set Color</button>
 				</div>
 			</details>
+			
+		</div>
+		<div class="tab" id="tab-render">
+			<div class="setting top switch-wrapper">
+				<span class="switch-text">Materials</span>
+				<select name="renderMaterials" id="renderMaterials">
+					<option value="renderMaterialsMToon">VRM MToon</option>
+					<option value="renderMaterialsTexture">Texture</option>
+					<option value="renderMaterialsSolid">Solid</option>
+					<option value="renderMaterialsWireframe">Wireframe</option>
+					<option value="renderMaterialsFaceOrientation">Face orientation</option>
+				</select>
+			</div>
 		</div>
 		<div class="tab-control">
 			<button class="tab-button" id="tab-btn-tab-model">
@@ -170,14 +193,11 @@
 				<span class="tab-icon">landscape</span>
 				<span class="tab-label">Scene</span>
 			</button>
+			<button class="tab-button" id="tab-btn-tab-render">
+				<span class="tab-icon">photo_camera</span>
+				<span class="tab-label">Render</span>
+			</button>
 		</div>
-	</div>
-
-	<div class="status-bar show" id="status">
-		<div class="status-bar-left">
-			<span id="status">Loading VRM model...</span>
-		</div>
-		<div class="status-bar-right"></div>
 	</div>
 
 	<div class="main-wrapper" id="mainWrapper" onclick="hideAllMenus();">
@@ -229,7 +249,6 @@
 		const playPauseBtn = document.getElementById('playPauseBtn');
 		const stopBtn = document.getElementById('stopBtn');
 
-		const statusDiv = document.getElementById('status');
 		const vrmModelName = document.getElementById('vrm-model-name');
 		const vrmAuthorName = document.getElementById('vrm-author-name');
 
@@ -255,8 +274,10 @@
 		const backgroundColorInput = document.getElementById('background-color');
 		const setBackgroundImageBtn = document.getElementById('setBackgroundImageBtn');
 		const backgroundImageFileInput = document.getElementById('backgroundImageFileInput');
+		const skyboxRotationRange = document.getElementById('skyboxRotationRange');
+		const fovRange = document.getElementById('fovRange');
 
-		// sliders events
+		// events
 		lightPosXInput.addEventListener('input', (e) => {
 			if (light) light.position.x = parseFloat(e.target.value);
 		});
@@ -288,34 +309,78 @@
 		});
 		setLightAsBgAvgBtn.addEventListener('click', (e) => {
 			e.preventDefault();
-			if (scene && light) {
-				const bg = scene.background;
-				if (bg && bg.isTexture) {
-					// get average color from texture
-					const canvas = document.createElement('canvas');
-					const context = canvas.getContext('2d');
-					const img = bg.image;
-					canvas.width = img.width;
-					canvas.height = img.height;
-					context.drawImage(img, 0, 0);
-					const imgData = context.getImageData(0, 0, canvas.width, canvas.height);
-					let r = 0, g = 0, b = 0;
-					const pixelCount = imgData.width * imgData.height;
-					for (let i = 0; i < imgData.data.length; i += 4) {
-						r += imgData.data[i];
-						g += imgData.data[i + 1];
-						b += imgData.data[i + 2];
-					}
-					r = Math.floor(r / pixelCount);
-					g = Math.floor(g / pixelCount);
-					b = Math.floor(b / pixelCount);
-					const avgColor = new THREE.Color(`rgb(${r}, ${g}, ${b})`);
-					light.color = avgColor;
-					lightColorInput.value = '#' + avgColor.getHexString();
-				} else if (bg && bg.isColor) {
-					light.color = bg.clone();
-					lightColorInput.value = '#' + bg.getHexString();
+
+			if (!scene || !light) return;
+
+			const bg = scene.background;
+
+			if (bg && bg.isTexture && bg.image) {
+
+				const canvas = document.createElement('canvas');
+				const ctx = canvas.getContext('2d');
+
+				const img = bg.image;
+				const size = 64; // downscale for performance
+				canvas.width = size;
+				canvas.height = size;
+
+				ctx.drawImage(img, 0, 0, size, size);
+				const data = ctx.getImageData(0, 0, size, size).data;
+
+				let r = 0, g = 0, b = 0;
+				let totalWeight = 0;
+
+				for (let i = 0; i < data.length; i += 4) {
+
+					// sRGB -> linear
+					let sr = data[i]     / 255;
+					let sg = data[i + 1] / 255;
+					let sb = data[i + 2] / 255;
+
+					sr = sr <= 0.04045 ? sr / 12.92 : Math.pow((sr + 0.055) / 1.055, 2.4);
+					sg = sg <= 0.04045 ? sg / 12.92 : Math.pow((sg + 0.055) / 1.055, 2.4);
+					sb = sb <= 0.04045 ? sb / 12.92 : Math.pow((sb + 0.055) / 1.055, 2.4);
+
+					// perceived luminance
+					const lum = sr * 0.2126 + sg * 0.7152 + sb * 0.0722;
+
+					// ignore very dark pixels
+					if (lum < 0.03) continue;
+
+					// prioritize lighter colors
+					const weight = Math.pow(lum, 0.6);
+
+					r += sr * weight;
+					g += sg * weight;
+					b += sb * weight;
+					totalWeight += weight;
 				}
+
+				if (totalWeight === 0) return;
+
+				r /= totalWeight;
+				g /= totalWeight;
+				b /= totalWeight;
+
+				// linear -> sRGB
+				r = r <= 0.0031308 ? r * 12.92 : 1.055 * Math.pow(r, 1 / 2.4) - 0.055;
+				g = g <= 0.0031308 ? g * 12.92 : 1.055 * Math.pow(g, 1 / 2.4) - 0.055;
+				b = b <= 0.0031308 ? b * 12.92 : 1.055 * Math.pow(b, 1 / 2.4) - 0.055;
+
+				// tone boosting
+				const color = new THREE.Color(
+					THREE.MathUtils.clamp(r * 1.1, 0, 1),
+					THREE.MathUtils.clamp(g * 1.1, 0, 1),
+					THREE.MathUtils.clamp(b * 1.1, 0, 1)
+				);
+
+				light.color.copy(color);
+				lightColorInput.value = `#${color.getHexString()}`;
+
+			}
+			else if (bg && bg.isColor) {
+				light.color.copy(bg);
+				lightColorInput.value = `#${bg.getHexString()}`;
 			}
 		});
 		backgroundColorInput.addEventListener('input', (e) => {
@@ -340,6 +405,120 @@
 				});
 			}
 			backgroundImageFileInput.value = ''; // reset
+		});
+		skyboxRotationRange.addEventListener('input', (e) => {
+			const angle = THREE.MathUtils.degToRad(e.target.value);
+
+			if (scene && scene.background) {
+				scene.backgroundRotation.y = angle;
+			}
+		});
+		fovRange.addEventListener('input', (e) => {
+			const fov = parseFloat(e.target.value);
+
+			if (camera) {
+				camera.fov = fov;
+				camera.updateProjectionMatrix();
+			}
+		});
+		const renderMaterialsSelect = document.getElementById('renderMaterials');
+
+		renderMaterialsSelect.addEventListener('change', () => {
+			if (!currentVrm?.scene) return;
+
+			const mode = renderMaterialsSelect.value;
+
+			currentVrm.scene.traverse(obj => {
+				if (!obj.isMesh || !obj.material) return;
+
+				if (!obj.userData.__originalMaterial) {
+					obj.userData.__originalMaterial = obj.material;
+				}
+
+				const original = obj.userData.__originalMaterial;
+				const materials = Array.isArray(original) ? original : [original];
+
+				let newMaterials = materials.map(mat => {
+					let newMat = null;
+
+					switch (mode) {
+						case 'renderMaterialsMToon':
+							return mat;
+
+						case 'renderMaterialsTexture':
+							return new THREE.MeshBasicMaterial({
+								map: mat.map || mat.baseMap || null,
+								transparent: true,
+								depthWrite: true,
+								depthTest: true,
+								alphaTest: 0.001
+							});
+
+						case 'renderMaterialsSolid':
+							return new THREE.MeshNormalMaterial();
+
+						case 'renderMaterialsWireframe': {
+							const color = getComputedStyle(document.body)
+								.getPropertyValue('--text-color')
+								.trim();
+							return new THREE.MeshBasicMaterial({
+								color,
+								wireframe: true
+							});
+						}
+
+						case 'renderMaterialsFaceOrientation': {
+							const cssGreen = getComputedStyle(document.body)
+								.getPropertyValue('--color-green')
+								.trim();
+							const cssRed = getComputedStyle(document.body)
+								.getPropertyValue('--color-red')
+								.trim();
+
+							function cssColorToVec3(css) {
+								const ctx = document.createElement('canvas').getContext('2d');
+								ctx.fillStyle = css;
+								ctx.fillRect(0, 0, 1, 1);
+								const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+								return new THREE.Vector3(r / 255, g / 255, b / 255);
+							}
+
+							return new THREE.ShaderMaterial({
+								side: THREE.DoubleSide,
+								uniforms: {
+									colorFront: { value: cssColorToVec3(cssGreen) },
+									colorBack:  { value: cssColorToVec3(cssRed) },
+									lightDir:   { value: new THREE.Vector3(0.3, 0.7, 0.6).normalize() }
+								},
+								vertexShader: `
+									varying vec3 vNormal;
+									void main() {
+										vNormal = normalize(normalMatrix * normal);
+										gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+									}
+								`,
+								fragmentShader: `
+									uniform vec3 colorFront;
+									uniform vec3 colorBack;
+									uniform vec3 lightDir;
+									varying vec3 vNormal;
+
+									void main() {
+										vec3 baseColor = gl_FrontFacing ? colorFront : colorBack;
+										float light = dot(normalize(vNormal), lightDir);
+										light = light * 0.5 + 0.5;
+										gl_FragColor = vec4(baseColor * light, 1.0);
+									}
+								`
+							});
+						}
+					}
+
+					return mat;
+				});
+
+				obj.material = Array.isArray(original) ? newMaterials : newMaterials[0];
+			});
 		});
 
 		// #endregion DOM Elements
@@ -370,7 +549,7 @@
 
 		// #region Three.js Setup
 		// --- Three.js Setup ---
-		const renderer = new THREE.WebGLRenderer({ antialias: true });
+		let renderer = new THREE.WebGLRenderer({ antialias: true });
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		renderer.setPixelRatio(window.devicePixelRatio);
 		renderer.outputEncoding = THREE.sRGBEncoding; // Correct color space
@@ -473,19 +652,19 @@
 					saveVrmToIdb(file).then(() => {
 						const entry = { type: 'idb', name: name || (file.name || 'recent.vrm') };
 						localStorage.setItem(LAST_VRM_KEY, JSON.stringify(entry));
-						statusDiv.textContent = 'Saved last VRM.';
+						// statusDiv.textContent = 'Saved last VRM.';
 					}).catch((e) => {
 						console.warn('Failed to save VRM to IndexedDB:', e);
 						// Fallback: save only metadata
 						const entry = { type: 'meta', name: name || (file.name || 'recent.vrm') };
 						localStorage.setItem(LAST_VRM_KEY, JSON.stringify(entry));
-						statusDiv.textContent = 'Last VRM metadata saved (IDB failed).';
+						// statusDiv.textContent = 'Last VRM metadata saved (IDB failed).';
 					});
 				} else {
 					// Not a File -> store URL reference
 					const entry = { type: 'url', url, name: name || (url && url.split('/').pop()) };
 					localStorage.setItem(LAST_VRM_KEY, JSON.stringify(entry));
-					statusDiv.textContent = 'Saved last VRM (URL).';
+					// statusDiv.textContent = 'Saved last VRM (URL).';
 				}
 			} catch (e) {
 				console.warn('saveLastVrm error:', e);
@@ -506,7 +685,6 @@
 					// Retrieve blob from IndexedDB
 					const file = await getVrmFromIdb();
 					if (!file) {
-						statusDiv.textContent = 'No VRM found in IndexedDB.';
 						return false;
 					}
 					const url = URL.createObjectURL(file);
@@ -522,7 +700,6 @@
 					await loadVRM(entry.url, entry.name || (entry.url && entry.url.split('/').pop()));
 					return true;
 				} else if (entry.type === 'meta') {
-					statusDiv.textContent = 'Last VRM was a local file and could not be restored automatically.';
 					return false;
 				}
 			} catch (e) {
@@ -621,6 +798,7 @@
 		// --- File Paths ---
 		const VRM_MODEL_URL = './VRM/default.vrm'; // Fixed VRM model path (relative path)
 		// VRMA animations dictionary: map an id/key (used by buttons) to URL
+		// VRMA animations dictionary: map an id/key (used by buttons) to URL
 		const VRMA_ANIMATIONS = {
 			// 'Angry'       : './VRMA/tk256ailab/Angry.vrma',
 			// 'Blush'       : './VRMA/tk256ailab/Blush.vrma',
@@ -658,8 +836,9 @@
 		};
 
 		const SKYBOXES = {
-			'Sky' : './skybox/sky.png',
-			'Night' : './skybox/night.png',
+			'Day' : './skybox/day.png',
+			'Dusk' : './skybox/dusk.png',
+			'Night' : './skybox/night.png'
 		};
 		// #endregion File Paths
 
@@ -799,18 +978,18 @@
 						},
 						(progress) => {
 							const percent = (100.0 * (progress.loaded / progress.total)).toFixed(1);
-							statusDiv.textContent = `Loading VRM model... ${percent}%`;
+							showToast(`Loading VRM model ${percent}%`, 'accessibility', true);
 						},
 						(error) => {
 							console.error('Error loading VRM:', error);
-							statusDiv.textContent = 'An error occurred while loading the VRM model';
+							// statusDiv.textContent = 'An error occurred while loading the VRM model';
 							reject(error);
 						}
 					);
 				});
 			} catch (error) {
 				console.error('Error in loadVRM:', error);
-				statusDiv.textContent = 'An error occurred while loading the VRM model';
+				// statusDiv.textContent = 'An error occurred while loading the VRM model';
 			}
 		}
 
@@ -821,12 +1000,12 @@
 		 */
 		async function loadVRMA(url, displayName) {
 			if (!currentVrm) {
-				statusDiv.textContent = 'VRM model not loaded. Please load the VRM model first.';
+				showToast('VRM model not loaded', 'error');
 				return;
 			}
 
 			try {
-				statusDiv.textContent = 'Loading VRMA animation...';
+				// statusDiv.textContent = 'Loading VRMA animation...';
 
 				return new Promise((resolve, reject) => {
 					loader.load(
@@ -845,7 +1024,7 @@
 								if (clip) {
 									vrmaAnimationClip = clip;
 
-									statusDiv.textContent = 'Animation loaded successfully!';
+									// statusDiv.textContent = 'Animation loaded successfully!';
 									console.log('Generated AnimationClip:', vrmaAnimationClip);
 
 									updateButtons(); // Enable play/pause/stop after animation is loaded
@@ -866,19 +1045,19 @@
 							}
 						},
 						(progress) => {
-							const percent = (100.0 * (progress.loaded / progress.total)).toFixed(1);
-							statusDiv.textContent = `Loading VRMA animation... ${percent}%`;
+							// const percent = (100.0 * (progress.loaded / progress.total)).toFixed(1);
+							// statusDiv.textContent = `Loading VRMA animation... ${percent}%`;
 						},
 						(error) => {
 							console.error('Error loading animation:', error);
-							statusDiv.textContent = 'An error occurred while loading the animation file: ' + error.message;
+							// statusDiv.textContent = 'An error occurred while loading the animation file: ' + error.message;
 							reject(error);
 						}
 					);
 				});
 			} catch (error) {
 				console.error('Error in loadVRMA:', error);
-				statusDiv.textContent = 'An error occurred while loading the animation file';
+				// statusDiv.textContent = 'An error occurred while loading the animation file';
 			}
 		}
 		// #endregion File Loading
@@ -905,16 +1084,16 @@
 					currentAction.reset(); // Reset to the start of the animation
 					currentAction.play(); // Start playing
 
-					statusDiv.textContent = `Playing animation (${vrmaAnimationClip.tracks.length} tracks, ${vrmaAnimationClip.duration.toFixed(2)}s)`;
+					// statusDiv.textContent = `Playing animation (${vrmaAnimationClip.tracks.length} tracks, ${vrmaAnimationClip.duration.toFixed(2)}s)`;
 					// update toggle icon if present
 					setPlayPauseIcon(true);
 					console.log('Animation started successfully.');
 				} catch (error) {
 					console.error('Error playing animation:', error);
-					statusDiv.textContent = 'An error occurred while playing the animation: ' + error.message;
+					showToast('An error occurred playing the animation','error');
 				}
 			} else {
-				statusDiv.textContent = 'A VRM model and animation must be loaded.';
+				showToast('A VRM and VRMA must be selected','error');
 			}
 		}
 
@@ -924,7 +1103,7 @@
 		function pauseAnimation() {
 			if (currentAction) {
 				currentAction.paused = !currentAction.paused;
-				statusDiv.textContent = currentAction.paused ? 'Animation paused' : 'Animation playing...';
+				// statusDiv.textContent = currentAction.paused ? 'Animation paused' : 'Animation playing...';
 				setPlayPauseIcon(!currentAction.paused);
 			}
 		}
@@ -940,7 +1119,7 @@
 
 				// Reset VRM pose (optional, but good for stopping)
 				if (currentVrm) {
-					currentVrm.humanoid.resetPose();
+					currentVrm.humanoid.resetNormalizedPose();
 				}
 				// reset play/pause icon to play
 				setPlayPauseIcon(false);
@@ -993,61 +1172,6 @@
 		const animationKeys = Object.keys(VRMA_ANIMATIONS || {});
 		const normalizedMap = {};
 		animationKeys.forEach(k => { normalizedMap[normalizeKey(k)] = VRMA_ANIMATIONS[k]; });
-
-		// Populate VRMA buttons dynamically from the VRMA_ANIMATIONS dictionary
-		function populateVrmaButtons() {
-			const container = document.querySelector('#vrmaButtons .item-group-content');
-			if (!container) return;
-			container.innerHTML = '';
-			const keys = Object.keys(VRMA_ANIMATIONS || {});
-			keys.forEach(k => {
-				const url = VRMA_ANIMATIONS[k];
-				const clean = String(url).replace(/^\.\/+/, '');
-				const parts = clean.split('/');
-				const folder = parts.length >= 2 ? parts[1] : '';
-
-				const btn = document.createElement('button');
-				btn.className = 'item vrma-btn';
-				btn.disabled = true; // will be enabled by updateButtons when VRM loaded
-				btn.dataset.key = k;
-				btn.setAttribute('translate', 'no');
-
-				const inner = document.createElement('div');
-				inner.style.width = '90%';
-				const strong = document.createElement('strong');
-				strong.textContent = k + ' ';
-				const span = document.createElement('span');
-				span.textContent = folder ? ('by ' + folder) : '';
-				inner.appendChild(strong);
-				inner.appendChild(span);
-				btn.appendChild(inner);
-
-				btn.addEventListener('click', async () => {
-					if (currentAction) { try { currentAction.stop(); } catch (e) { } currentAction = undefined; }
-					vrmaAnimationClip = undefined;
-					const key = btn.dataset.key || btn.textContent.trim();
-					const n = normalizeKey(key);
-					let url2 = normalizedMap[n];
-					if (!url2) {
-						for (const kk of keys) {
-							if (normalizeKey(kk) === n) { url2 = VRMA_ANIMATIONS[kk]; break; }
-						}
-					}
-					if (!url2) {
-						statusDiv.textContent = 'Animation not found for ' + key;
-						console.warn('No VRMA mapping for button key:', key);
-						return;
-					}
-					await loadVRMA(url2, url2.split('/').pop());
-					if (isMobile()) document.getElementById('controls-bar').classList.remove('show');
-				});
-
-				container.appendChild(btn);
-			});
-		}
-
-		// Build the buttons now
-		populateVrmaButtons();
 
 		// Populate selects for animations and poses
 		function populateAnimationSelect() {
@@ -1337,7 +1461,7 @@
 
 		function togglePlayPause() {
 			if (!currentVrm || !vrmaAnimationClip) {
-				statusDiv.textContent = 'A VRM model and animation must be loaded.';
+				// statusDiv.textContent = 'A VRM model and animation must be loaded.';
 				return;
 			}
 			// If no action, start playing
@@ -1847,17 +1971,14 @@
 		// #region skybox
 		function applySkyboxFromURL(url) {
 			const loader = new THREE.TextureLoader();
-
 			loader.load(url, (texture) => {
 				texture.colorSpace = THREE.SRGBColorSpace;
 				texture.flipY = true;
 				texture.mapping = THREE.EquirectangularReflectionMapping;
-
-				scene.background = texture;
-				scene.environment = texture;
+				scene.background = texture; scene.environment = texture;
 			}, undefined, (err) => {
 				console.error('Failed to load skybox:', err);
-				showToast('Failed to load skybox.', 'error');
+				showToast('Failed to load skybox.', 'error'); 
 			});
 		}
 		function populateSkyboxButtons() {
@@ -1962,8 +2083,6 @@
 	</script>
 
 	<script>
-		const statusBar = document.getElementById('status');
-
 		// #region settings
 
 		function loadSettings() {
@@ -1973,10 +2092,6 @@
 			if (Settings.getSetting("theme") === "theme-custom") {
 				applyCustomTheme(Settings.getSetting("theme-custom-value", ""));
 			}
-
-			// status bar
-			if (Settings.getSetting("statusShow", "true") != "true") statusBar.classList.remove('show');
-			else statusBar.classList.add('show');
 		}
 
 		loadSettings();
